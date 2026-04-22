@@ -31,7 +31,11 @@ const chargeValue = document.querySelector("#chargeValue");
 
 const palette = {
   shell: 0x19484e,
+  shellFill: 0xe6efed,
+  shellWire: 0x2c5960,
   field: 0x2f7fb7,
+  fieldCore: 0x1671aa,
+  fieldHalo: 0x94d3ff,
   equipotential: [0xdf6d3f, 0xd79837, 0x7b9f3e],
   positive: 0xe1583b,
   negative: 0x2d72d2,
@@ -693,10 +697,15 @@ function updateReadouts(model) {
 }
 
 function createRenderer() {
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  const renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: false,
+    powerPreference: "high-performance",
+  });
+  renderer.setPixelRatio(Math.min((window.devicePixelRatio || 1) * 1.25, 3));
   renderer.setSize(sceneHost.clientWidth, sceneHost.clientHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.setClearColor(0xf8f4ee, 1);
   sceneHost.innerHTML = "";
   sceneHost.appendChild(renderer.domElement);
   return renderer;
@@ -704,10 +713,10 @@ function createRenderer() {
 
 function initThree() {
   state.scene = new THREE.Scene();
-  state.scene.fog = new THREE.Fog(0xf4efe8, 11, 20);
+  state.scene.background = new THREE.Color(0xf8f4ee);
 
   state.camera = new THREE.PerspectiveCamera(
-    42,
+    34,
     sceneHost.clientWidth / sceneHost.clientHeight,
     0.1,
     100
@@ -717,14 +726,23 @@ function initThree() {
   state.renderer = createRenderer();
   state.controls = new OrbitControls(state.camera, state.renderer.domElement);
   state.controls.enableDamping = true;
+  state.controls.dampingFactor = 0.06;
+  state.controls.enablePan = false;
+  state.controls.minDistance = 3.8;
+  state.controls.maxDistance = 12;
+  state.controls.minPolarAngle = 0.18;
+  state.controls.maxPolarAngle = Math.PI - 0.2;
   state.controls.target.set(0, 0.5, 0);
 
-  const ambient = new THREE.AmbientLight(0xffffff, 0.95);
-  const keyLight = new THREE.DirectionalLight(0xffffff, 1.1);
-  keyLight.position.set(5, 7, 4);
-  const fillLight = new THREE.DirectionalLight(0xf6e8d6, 0.55);
-  fillLight.position.set(-6, 3, -5);
-  state.scene.add(ambient, keyLight, fillLight);
+  const ambient = new THREE.AmbientLight(0xffffff, 0.86);
+  const hemisphere = new THREE.HemisphereLight(0xffffff, 0xe9dfd1, 0.72);
+  const keyLight = new THREE.DirectionalLight(0xffffff, 1.25);
+  keyLight.position.set(5.5, 8, 5.5);
+  const fillLight = new THREE.DirectionalLight(0xe7f2ff, 0.55);
+  fillLight.position.set(-7, 4, -4);
+  const rimLight = new THREE.DirectionalLight(0xf6d7b6, 0.36);
+  rimLight.position.set(3, 2, -7);
+  state.scene.add(ambient, hemisphere, keyLight, fillLight, rimLight);
 
   state.shellGroup = new THREE.Group();
   state.fieldGroup = new THREE.Group();
@@ -737,21 +755,33 @@ function buildShell(model) {
   state.shellGroup.clear();
   state.markerGroup.clear();
 
-  const shellMaterial = new THREE.MeshPhysicalMaterial({
-    color: palette.shell,
+  const shellMaterial = new THREE.MeshBasicMaterial({
+    color: palette.shellFill,
     transparent: true,
-    opacity: 0.1,
+    opacity: 0.24,
     side: THREE.DoubleSide,
-    roughness: 0.4,
-    metalness: 0.08,
   });
-  const shellGeometry = new THREE.SphereGeometry(model.radius, 72, 72);
+  const shellGeometry = new THREE.SphereGeometry(model.radius, 48, 36);
   const shellMesh = new THREE.Mesh(shellGeometry, shellMaterial);
   const wire = new THREE.LineSegments(
     new THREE.WireframeGeometry(shellGeometry),
-    new THREE.LineBasicMaterial({ color: palette.shell, transparent: true, opacity: 0.35 })
+    new THREE.LineBasicMaterial({
+      color: palette.shellWire,
+      transparent: true,
+      opacity: 0.22,
+    })
   );
-  state.shellGroup.add(shellMesh, wire);
+  const shellRim = new THREE.Mesh(
+    shellGeometry.clone(),
+    new THREE.MeshBasicMaterial({
+      color: palette.shell,
+      side: THREE.BackSide,
+      transparent: true,
+      opacity: 0.09,
+    })
+  );
+  shellRim.scale.setScalar(1.018);
+  state.shellGroup.add(shellMesh, wire, shellRim);
 
   const axisMaterial = new THREE.LineDashedMaterial({
     color: 0x69a7c6,
@@ -816,14 +846,30 @@ function buildFieldLineMeshes(model) {
     return;
   }
 
-  const azimuths = [0, Math.PI / 3, (2 * Math.PI) / 3, Math.PI, (4 * Math.PI) / 3, (5 * Math.PI) / 3];
-  const lineMaterial = new THREE.LineBasicMaterial({
-    color: palette.field,
+  const azimuths = [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2, Math.PI / 4, (5 * Math.PI) / 4];
+  const haloMaterial = new THREE.MeshBasicMaterial({
+    color: palette.fieldHalo,
     transparent: true,
-    opacity: 0.88,
+    opacity: 0.16,
+    depthWrite: false,
+  });
+  const coreMaterial = new THREE.MeshStandardMaterial({
+    color: palette.fieldCore,
+    emissive: palette.field,
+    emissiveIntensity: 0.18,
+    roughness: 0.32,
+    metalness: 0.05,
+  });
+  const arrowGeometry = new THREE.ConeGeometry(model.radius * 0.02, model.radius * 0.075, 10);
+  const arrowMaterial = new THREE.MeshStandardMaterial({
+    color: palette.fieldCore,
+    emissive: palette.field,
+    emissiveIntensity: 0.24,
+    roughness: 0.28,
+    metalness: 0.04,
   });
 
-  state.meridianLines.forEach((line) => {
+  state.meridianLines.slice(0, 12).forEach((line, lineIndex) => {
     const radialProfile = compressProfile(
       line.map((point) => ({
         x: Math.abs(point.x),
@@ -835,9 +881,32 @@ function buildFieldLineMeshes(model) {
       const points = radialProfile.map(
         (point) => new THREE.Vector3(point.x * Math.cos(phi), point.y, point.x * Math.sin(phi))
       );
-      const geometry = new THREE.BufferGeometry().setFromPoints(points);
-      const mesh = new THREE.Line(geometry, lineMaterial);
-      state.fieldGroup.add(mesh);
+      if (points.length < 4) {
+        return;
+      }
+
+      const curve = new THREE.CatmullRomCurve3(points, false, "centripetal", 0.35);
+      const tubularSegments = Math.max(points.length * 3, 54);
+      const haloGeometry = new THREE.TubeGeometry(curve, tubularSegments, model.radius * 0.0085, 6, false);
+      const coreGeometry = new THREE.TubeGeometry(curve, tubularSegments, model.radius * 0.0038, 8, false);
+
+      const haloMesh = new THREE.Mesh(haloGeometry, haloMaterial);
+      haloMesh.renderOrder = 1;
+      const coreMesh = new THREE.Mesh(coreGeometry, coreMaterial);
+      coreMesh.renderOrder = 2;
+      state.fieldGroup.add(haloMesh, coreMesh);
+
+      if (lineIndex % 2 === 0) {
+        [0.36, 0.68].forEach((t) => {
+          const position = curve.getPointAt(t);
+          const tangent = curve.getTangentAt(t).normalize();
+          const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
+          arrow.position.copy(position).addScaledVector(tangent, model.radius * 0.02);
+          arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tangent);
+          arrow.renderOrder = 3;
+          state.fieldGroup.add(arrow);
+        });
+      }
     });
   });
 }
@@ -861,15 +930,15 @@ function buildEquipotentialMeshes(model) {
       );
 
       const geometry = new THREE.LatheGeometry(points, 72);
-      const material = new THREE.MeshPhysicalMaterial({
+      const material = new THREE.MeshBasicMaterial({
         color: palette.equipotential[levelIndex % palette.equipotential.length],
         transparent: true,
-        opacity: 0.12,
-        roughness: 0.32,
-        metalness: 0.04,
+        opacity: 0.07,
         side: THREE.DoubleSide,
+        depthWrite: false,
       });
       const mesh = new THREE.Mesh(geometry, material);
+      mesh.renderOrder = 0;
       state.surfaceGroup.add(mesh);
     });
   });
