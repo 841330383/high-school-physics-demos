@@ -1,6 +1,3 @@
-import * as THREE from "./vendor/three.module.js";
-import { OrbitControls } from "./vendor/OrbitControls.js";
-
 const params = {
   radius: 1.4,
   chargeDistance: 2.6,
@@ -521,7 +518,65 @@ function drawArrowHead(ctx, from, to, color) {
   ctx.restore();
 }
 
-function drawMeasureSegment(ctx, x, y1, y2, label, color) {
+function drawRoundedRect(ctx, x, y, width, height, radius) {
+  const safeRadius = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + safeRadius, y);
+  ctx.lineTo(x + width - safeRadius, y);
+  ctx.arcTo(x + width, y, x + width, y + safeRadius, safeRadius);
+  ctx.lineTo(x + width, y + height - safeRadius);
+  ctx.arcTo(x + width, y + height, x + width - safeRadius, y + height, safeRadius);
+  ctx.lineTo(x + safeRadius, y + height);
+  ctx.arcTo(x, y + height, x, y + height - safeRadius, safeRadius);
+  ctx.lineTo(x, y + safeRadius);
+  ctx.arcTo(x, y, x + safeRadius, y, safeRadius);
+  ctx.closePath();
+}
+
+function drawTextChip(ctx, text, x, y, options = {}) {
+  const {
+    align = "left",
+    font = "600 16px 'Microsoft YaHei'",
+    textColor = "#1b292c",
+    fill = "rgba(255, 255, 255, 0.9)",
+    stroke = "rgba(27, 41, 44, 0.12)",
+    paddingX = 10,
+    paddingY = 6,
+    radius = 10,
+  } = options;
+
+  ctx.save();
+  ctx.font = font;
+  ctx.textBaseline = "middle";
+
+  const metrics = ctx.measureText(text);
+  const textHeight =
+    (metrics.actualBoundingBoxAscent || 11) + (metrics.actualBoundingBoxDescent || 5);
+  const boxWidth = metrics.width + paddingX * 2;
+  const boxHeight = textHeight + paddingY * 2;
+
+  let boxX = x;
+  if (align === "center") {
+    boxX = x - boxWidth / 2;
+  } else if (align === "right") {
+    boxX = x - boxWidth;
+  }
+
+  const boxY = y - boxHeight / 2;
+  drawRoundedRect(ctx, boxX, boxY, boxWidth, boxHeight, radius);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = textColor;
+  ctx.fillText(text, boxX + paddingX, y);
+  ctx.restore();
+}
+
+function drawMeasureSegment(ctx, x, y1, y2, label, color, options = {}) {
+  const { labelSide = "right", labelOffset = 14, labelDy = 0 } = options;
   const head = 7;
   const top = Math.min(y1, y2);
   const bottom = Math.max(y1, y2);
@@ -543,9 +598,16 @@ function drawMeasureSegment(ctx, x, y1, y2, label, color) {
   ctx.moveTo(x, bottom);
   ctx.lineTo(x + head, bottom - head);
   ctx.stroke();
-  ctx.font = "600 16px 'Microsoft YaHei'";
-  ctx.fillText(label, x + 10, mid - 4);
   ctx.restore();
+
+  const labelX = labelSide === "left" ? x - labelOffset : x + labelOffset;
+  drawTextChip(ctx, label, labelX, mid + labelDy, {
+    align: labelSide === "left" ? "right" : "left",
+    font: "600 16px 'Microsoft YaHei'",
+    textColor: color,
+    fill: "rgba(255, 255, 255, 0.96)",
+    stroke: "rgba(27, 41, 44, 0.1)",
+  });
 }
 
 function drawSlice(model) {
@@ -572,6 +634,8 @@ function drawSlice(model) {
   const topShell = projectToCanvas(model, 0, model.radius, width, height);
   const chargePoint = projectToCanvas(model, 0, model.a, width, height);
   const radiusPixels = center.scale * model.radius;
+  const leftMeasureX = center.x - radiusPixels - 74;
+  const rightMeasureX = center.x + radiusPixels + 88;
 
   if (params.showEquipotentialSurfaces) {
     const contourColors = ["#df6d3f", "#d79837", "#7b9f3e"];
@@ -654,55 +718,89 @@ function drawSlice(model) {
   sliceCtx.strokeStyle = "rgba(25, 72, 78, 0.22)";
   sliceCtx.lineWidth = 1;
   sliceCtx.beginPath();
-  sliceCtx.moveTo(center.x - radiusPixels - 40, center.y);
+  sliceCtx.moveTo(leftMeasureX, center.y);
   sliceCtx.lineTo(center.x, center.y);
-  sliceCtx.moveTo(center.x - radiusPixels - 40, topShell.y);
+  sliceCtx.moveTo(leftMeasureX, topShell.y);
   sliceCtx.lineTo(center.x, topShell.y);
-  sliceCtx.moveTo(center.x + radiusPixels + 40, topShell.y);
+  sliceCtx.moveTo(rightMeasureX, topShell.y);
   sliceCtx.lineTo(center.x, topShell.y);
-  sliceCtx.moveTo(center.x + radiusPixels + 40, chargePoint.y);
+  sliceCtx.moveTo(rightMeasureX, chargePoint.y);
   sliceCtx.lineTo(center.x, chargePoint.y);
   sliceCtx.stroke();
   sliceCtx.restore();
 
   drawMeasureSegment(
     sliceCtx,
-    center.x - radiusPixels - 40,
+    leftMeasureX,
     center.y,
     topShell.y,
     `R = ${fmt(model.radius, 2)}`,
-    "#19484e"
+    "#19484e",
+    { labelSide: "left" }
   );
   drawMeasureSegment(
     sliceCtx,
-    center.x + radiusPixels + 40,
+    rightMeasureX,
     topShell.y,
     chargePoint.y,
     `d = a - R = ${fmt(model.gap, 2)}`,
-    "#c77434"
+    "#c77434",
+    { labelSide: "right" }
   );
 
   if (params.showImageCharge) {
     const imagePoint = projectToCanvas(model, 0, model.b, width, height);
+    const imageMeasureX = center.x - Math.max(radiusPixels * 0.46, 56);
+    const imageLabelX = center.x + Math.max(radiusPixels * 0.6, 68);
+    const imageLabelY = imagePoint.y - 20;
+
     sliceCtx.save();
     sliceCtx.setLineDash([6, 5]);
     sliceCtx.strokeStyle = "rgba(96, 112, 120, 0.9)";
     sliceCtx.lineWidth = 2;
     sliceCtx.beginPath();
-    sliceCtx.moveTo(center.x + 18, center.y);
-    sliceCtx.lineTo(imagePoint.x + 18, imagePoint.y);
-    sliceCtx.arc(imagePoint.x, imagePoint.y, 9, 0, Math.PI * 2);
+    sliceCtx.moveTo(imageMeasureX, center.y);
+    sliceCtx.lineTo(imageMeasureX, imagePoint.y);
+    sliceCtx.moveTo(imageMeasureX, center.y);
+    sliceCtx.lineTo(center.x, center.y);
+    sliceCtx.moveTo(imageMeasureX, imagePoint.y);
+    sliceCtx.lineTo(center.x, imagePoint.y);
+    sliceCtx.moveTo(imagePoint.x + 7, imagePoint.y - 3);
+    sliceCtx.lineTo(imageLabelX - 12, imageLabelY);
     sliceCtx.stroke();
     sliceCtx.restore();
+
+    drawMeasureSegment(
+      sliceCtx,
+      imageMeasureX,
+      center.y,
+      imagePoint.y,
+      `b = ${fmt(model.b, 2)}`,
+      "#607078",
+      { labelSide: "left" }
+    );
+
     sliceCtx.beginPath();
     sliceCtx.fillStyle = "rgba(96, 112, 120, 0.78)";
     sliceCtx.arc(imagePoint.x, imagePoint.y, 5, 0, Math.PI * 2);
     sliceCtx.fill();
-    sliceCtx.fillStyle = "#607078";
-    sliceCtx.font = "600 18px 'Microsoft YaHei'";
-    sliceCtx.fillText("A'", imagePoint.x + 12, imagePoint.y - 12);
-    sliceCtx.fillText(`b = ${fmt(model.b, 2)}`, imagePoint.x + 18, imagePoint.y + 18);
+
+    drawTextChip(sliceCtx, "A'", imageLabelX, imageLabelY, {
+      align: "left",
+      font: "700 17px 'Microsoft YaHei'",
+      textColor: "#607078",
+      fill: "rgba(255, 255, 255, 0.96)",
+      stroke: "rgba(96, 112, 120, 0.18)",
+    });
   }
+
+  const labelOffsets = {
+    A: { dx: 20, dy: -16, align: "left" },
+    B: { dx: -18, dy: -28, align: "right" },
+    O: { dx: 18, dy: 24, align: "left" },
+    M: { dx: -20, dy: -18, align: "right" },
+    N: { dx: 18, dy: -18, align: "left" },
+  };
 
   Object.entries(model.points).forEach(([key, point]) => {
     const canvasPoint = projectToCanvas(model, point.x, point.y, width, height);
@@ -721,8 +819,15 @@ function drawSlice(model) {
 
     sliceCtx.fillStyle = "#1b292c";
     sliceCtx.font = "italic 24px 'Times New Roman'";
-    const xOffset = key === "M" ? -28 : 14;
-    sliceCtx.fillText(key, canvasPoint.x + xOffset, canvasPoint.y - 10);
+    sliceCtx.lineWidth = 6;
+    sliceCtx.strokeStyle = "rgba(255, 255, 255, 0.96)";
+    const label = labelOffsets[key] || { dx: 14, dy: -10, align: "left" };
+    const textX = canvasPoint.x + label.dx;
+    const textY = canvasPoint.y + label.dy;
+    sliceCtx.textAlign = label.align;
+    sliceCtx.textBaseline = "middle";
+    sliceCtx.strokeText(key, textX, textY);
+    sliceCtx.fillText(key, textX, textY);
   });
 }
 
@@ -777,7 +882,7 @@ function initThree() {
   state.camera.position.set(5.2, 3.8, 5.4);
 
   state.renderer = createRenderer();
-  state.controls = new OrbitControls(state.camera, state.renderer.domElement);
+  state.controls = new THREE.OrbitControls(state.camera, state.renderer.domElement);
   state.controls.enableDamping = true;
   state.controls.dampingFactor = 0.06;
   state.controls.enablePan = false;
@@ -802,6 +907,37 @@ function initThree() {
   state.surfaceGroup = new THREE.Group();
   state.markerGroup = new THREE.Group();
   state.scene.add(state.surfaceGroup, state.fieldGroup, state.shellGroup, state.markerGroup);
+}
+
+function createPointLabelSprite(text, color = "#1b292c") {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "italic 56px 'Times New Roman'";
+  ctx.lineWidth = 16;
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.96)";
+  ctx.strokeText(text, canvas.width / 2, canvas.height / 2);
+  ctx.fillStyle = color;
+  ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+
+  const material = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+  });
+
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(0.72, 0.36, 1);
+  return sprite;
 }
 
 function buildShell(model) {
@@ -909,16 +1045,32 @@ function buildShell(model) {
     state.shellGroup.add(imageHalo);
   }
 
+  const labelOffsets = {
+    A: new THREE.Vector3(0.36, 0.18, 0),
+    B: new THREE.Vector3(0.38, 0.16, 0),
+    O: new THREE.Vector3(0.38, -0.22, 0),
+    M: new THREE.Vector3(-0.34, 0.12, 0),
+    N: new THREE.Vector3(0.34, 0.12, 0),
+  };
+
   Object.entries(model.points)
     .filter(([name]) => name !== "A")
-    .forEach(([, point]) => {
+    .forEach(([name, point]) => {
       const marker = new THREE.Mesh(
         new THREE.SphereGeometry(model.radius * 0.025, 18, 18),
         new THREE.MeshStandardMaterial({ color: palette.point })
       );
       marker.position.set(point.x, point.y, 0);
       state.markerGroup.add(marker);
+
+      const label = createPointLabelSprite(name);
+      label.position.copy(marker.position).add(labelOffsets[name] || new THREE.Vector3(0.24, 0.14, 0));
+      state.markerGroup.add(label);
     });
+
+  const pointA = createPointLabelSprite("A", model.q > 0 ? "#e1583b" : "#2d72d2");
+  pointA.position.copy(state.realChargeMesh.position).add(labelOffsets.A);
+  state.markerGroup.add(pointA);
 }
 
 function buildFieldLineMeshes(model) {
@@ -1091,6 +1243,24 @@ function attachEvents() {
     resizeScene();
     drawSlice(state.model);
   });
+}
+
+function updateFormula(model) {
+  if (!formulaBoard) {
+    return;
+  }
+
+  const formulas = ["q&prime; = -qR / a", "b = R<sup>2</sup> / a", "r &lt; R 时：V = 0，E = 0"];
+
+  formulaBoard.innerHTML = formulas
+    .map(
+      (item) => `
+        <div class="formula-line">
+          <div class="formula-main">${item}</div>
+        </div>
+      `
+    )
+    .join("");
 }
 
 function init() {

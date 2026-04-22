@@ -321,11 +321,14 @@ select {
 
 .formula-board {
   display: grid;
-  gap: 8px;
+  gap: 12px;
 }
 
 .formula-line {
-  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  min-height: 82px;
+  padding: 18px 20px;
   border-radius: 14px;
   background: rgba(25, 72, 78, 0.06);
 }
@@ -337,9 +340,15 @@ select {
     "STSong",
     "Noto Serif CJK SC",
     serif;
-  font-size: 1.85rem;
+  font-size: clamp(1.7rem, 2.2vw, 2.2rem);
   font-weight: 700;
-  line-height: 1.16;
+  line-height: 1.28;
+  letter-spacing: 0.01em;
+}
+
+.formula-main sup {
+  font-size: 0.62em;
+  vertical-align: top;
 }
 
 .readout-list {
@@ -425,6 +434,65 @@ select {
   background: rgba(255, 255, 255, 0.94);
 }
 
+.slice-guide {
+  display: grid;
+  gap: 14px;
+  padding: 16px 24px 0;
+}
+
+.point-guide {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.point-card,
+.mistake-note {
+  padding: 14px 16px;
+  border: 1px solid var(--demo-line);
+  border-radius: var(--demo-radius-md);
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.point-card {
+  display: grid;
+  gap: 8px;
+}
+
+.point-badge,
+.mistake-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-width: 34px;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(25, 72, 78, 0.08);
+  color: var(--demo-accent);
+  font-family:
+    "Times New Roman",
+    "STSong",
+    "Noto Serif CJK SC",
+    serif;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.point-text,
+.mistake-text {
+  margin: 0;
+  color: var(--demo-muted);
+  line-height: 1.68;
+}
+
+.mistake-note {
+  display: grid;
+  gap: 10px;
+  background: rgba(176, 127, 78, 0.08);
+}
+
 @media (max-width: 1100px) {
   .demo-layout {
     grid-template-columns: 1fr;
@@ -436,6 +504,21 @@ select {
 
   .control-panel {
     order: 2;
+  }
+}
+
+@media (max-width: 720px) {
+  .point-guide {
+    grid-template-columns: 1fr;
+  }
+
+  .formula-line {
+    min-height: 72px;
+    padding: 16px;
+  }
+
+  .formula-main {
+    font-size: 1.5rem;
   }
 }
 

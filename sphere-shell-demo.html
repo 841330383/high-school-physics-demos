@@ -8,7 +8,7 @@
       name="description"
       content="接地导体球壳与球外点电荷的三维电场线、等势面与二维剖面演示。"
     />
-    <link rel="stylesheet" href="sphere-shell-demo.css" />
+    <link rel="stylesheet" href="sphere-shell-demo.css?v=20260422-2200" />
   </head>
   <body>
     <div class="demo-shell">
@@ -80,6 +80,37 @@
             <div class="slice-wrap">
               <canvas class="slice-canvas" id="sliceCanvas" width="1200" height="720"></canvas>
             </div>
+            <div class="slice-guide">
+              <div class="point-guide" aria-label="关键点说明">
+                <article class="point-card">
+                  <span class="point-badge">A</span>
+                  <p class="point-text">球壳外的真实点电荷</p>
+                </article>
+                <article class="point-card">
+                  <span class="point-badge">B</span>
+                  <p class="point-text">壳内观察点，用来判断壳内合场</p>
+                </article>
+                <article class="point-card">
+                  <span class="point-badge">O</span>
+                  <p class="point-text">球心，用来区分“Q 单独作用”和“合场”</p>
+                </article>
+                <article class="point-card">
+                  <span class="point-badge">M</span>
+                  <p class="point-text">球外对称点，用于比较场强与电势</p>
+                </article>
+                <article class="point-card">
+                  <span class="point-badge">N</span>
+                  <p class="point-text">与 M 对称的球外观察点</p>
+                </article>
+              </div>
+              <div class="mistake-note">
+                <span class="mistake-tag">易错点</span>
+                <p class="mistake-text">
+                  壳内合场为 0 并不以接地为前提。本页采用接地情形，是为了把球面电势固定为 0，
+                  并用最简的镜像电荷关系展示外场；同时不要把“Q 在 O 点单独产生的场”与“壳内实际合场”混为一谈。
+                </p>
+              </div>
+            </div>
           </section>
         </div>
 
@@ -116,6 +147,8 @@
       </main>
     </div>
 
-    <script type="module" src="sphere-shell-demo.js"></script>
+    <script src="vendor/three.min.js"></script>
+    <script src="vendor/OrbitControls.global.js"></script>
+    <script src="sphere-shell-demo.js?v=20260422-2200"></script>
   </body>
 </html>
