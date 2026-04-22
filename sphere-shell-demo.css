@@ -358,15 +358,47 @@ select {
   background: rgba(255, 255, 255, 0.66);
 }
 
-.formula-box code {
-  display: block;
-  margin-top: 8px;
-  padding: 10px 12px;
-  border-radius: 12px;
+.formula-caption {
+  margin: 0 0 12px;
+  color: var(--demo-muted);
+  font-size: 0.9rem;
+}
+
+.formula-board {
+  display: grid;
+  gap: 10px;
+}
+
+.formula-line {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
   background: rgba(25, 72, 78, 0.06);
+}
+
+.formula-label {
+  color: var(--demo-warm);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.formula-main {
   color: var(--demo-accent);
-  font-size: 0.92rem;
-  white-space: pre-wrap;
+  font-family:
+    "Times New Roman",
+    "STSong",
+    "Noto Serif CJK SC",
+    serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.formula-note {
+  color: var(--demo-muted);
+  font-size: 0.86rem;
 }
 
 .readout-list {
@@ -480,6 +512,10 @@ select {
 
   .scene3d {
     height: 420px;
+  }
+
+  .formula-main {
+    font-size: 1.3rem;
   }
 
   .viewer-footer {

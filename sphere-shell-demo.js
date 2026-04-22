@@ -15,7 +15,7 @@ const sceneHost = document.querySelector("#scene3d");
 const sliceCanvas = document.querySelector("#sliceCanvas");
 const sliceCtx = sliceCanvas.getContext("2d");
 const readoutList = document.querySelector("#readoutList");
-const formulaText = document.querySelector("#formulaText");
+const formulaBoard = document.querySelector("#formulaBoard");
 const insightList = document.querySelector("#insightList");
 
 const radiusInput = document.querySelector("#radiusInput");
@@ -738,12 +738,35 @@ function drawSlice(model) {
 }
 
 function updateFormula(model) {
-  formulaText.textContent =
-    `q' = -qR / a = ${fmt(model.qi, 3)}\n` +
-    `b = R² / a = ${fmt(model.b, 3)}\n` +
-    `a / R = ${fmt(model.ratio, 3)}，|q'| / |q| = ${fmt(model.imageRatio, 3)}\n` +
-    `V_out = k(q / r₁ + q' / r₂)\n` +
-    `r < R 时：V = 0，E = 0`;
+  const formulas = [
+    {
+      label: "镜像电荷量",
+      main: "q' = -qR / a",
+      note: `当前 q' = ${fmt(model.qi, 2)}`,
+    },
+    {
+      label: "镜像位置",
+      main: "b = R² / a",
+      note: `当前 b = ${fmt(model.b, 2)}`,
+    },
+    {
+      label: "壳内结论",
+      main: "r < R  →  V = 0，E = 0",
+      note: "壳内点先判是否在球壳内部，再判电势和场强。",
+    },
+  ];
+
+  formulaBoard.innerHTML = formulas
+    .map(
+      (item) => `
+        <div class="formula-line">
+          <div class="formula-label">${item.label}</div>
+          <div class="formula-main">${item.main}</div>
+          <div class="formula-note">${item.note}</div>
+        </div>
+      `
+    )
+    .join("");
 }
 
 function vectorText(field) {
