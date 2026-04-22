@@ -3,12 +3,12 @@ import { OrbitControls } from "./vendor/OrbitControls.js";
 
 const params = {
   radius: 1.4,
-  distanceFactor: 1.85,
+  chargeDistance: 2.6,
   chargeMagnitude: 1.0,
   chargeSign: -1,
   showFieldLines: true,
   showEquipotentialSurfaces: true,
-  showImageCharge: false,
+  showImageCharge: true,
 };
 
 const sceneHost = document.querySelector("#scene3d");
@@ -16,6 +16,7 @@ const sliceCanvas = document.querySelector("#sliceCanvas");
 const sliceCtx = sliceCanvas.getContext("2d");
 const readoutList = document.querySelector("#readoutList");
 const formulaText = document.querySelector("#formulaText");
+const insightList = document.querySelector("#insightList");
 
 const radiusInput = document.querySelector("#radiusInput");
 const distanceInput = document.querySelector("#distanceInput");
@@ -63,7 +64,11 @@ const state = {
   equipotentialLevels: [],
   points: {},
   viewExtent: 4,
+  hasInitialFrame: false,
 };
+
+const DISPLAY_EXTENT = 4.8;
+const MIN_GAP = 0.42;
 
 function fmt(value, digits = 2) {
   return Number(value).toFixed(digits);
@@ -126,18 +131,23 @@ function normalizeVector2(vector) {
 
 function buildModel() {
   const radius = params.radius;
-  const a = radius * params.distanceFactor;
+  const a = Math.max(params.chargeDistance, radius + MIN_GAP);
+  params.chargeDistance = a;
   const q = params.chargeMagnitude * params.chargeSign;
   const qi = -q * radius / a;
   const b = (radius * radius) / a;
-  const extent = Math.max(radius * 3.4, a + radius * 1.8);
+  const gap = a - radius;
+  const extent = Math.max(DISPLAY_EXTENT, a + 1.2);
+  const ratio = a / radius;
+  const imageRatio = Math.abs(qi / q);
+  const forceY = (q * qi) / Math.max((a - b) * (a - b), 1e-4);
 
   const points = {
     A: { x: 0, y: a, label: "A（锁定外电荷）", kind: "charge" },
-    B: { x: 0, y: radius * 0.42, label: "B（壳内）" },
+    B: { x: 0, y: Math.min(radius * 0.42, radius - 0.18), label: "B（壳内）" },
     O: { x: 0, y: 0, label: "O（球心）" },
-    M: { x: -radius * 1.45, y: radius * 0.58, label: "M（球外）" },
-    N: { x: radius * 1.45, y: radius * 0.58, label: "N（球外）" },
+    M: { x: -2.15, y: 0.82, label: "M（球外）" },
+    N: { x: 2.15, y: 0.82, label: "N（球外）" },
   };
 
   return {
@@ -146,7 +156,12 @@ function buildModel() {
     b,
     q,
     qi,
+    gap,
+    ratio,
+    imageRatio,
+    forceY,
     extent,
+    viewExtent: DISPLAY_EXTENT,
     chargeRadius: radius * 0.09,
     points,
   };
@@ -490,7 +505,10 @@ function buildContours(model) {
 
 function projectToCanvas(model, x, y, width, height) {
   const margin = 48;
-  const scale = Math.min((width - margin * 2) / (model.extent * 2), (height - margin * 2) / (model.extent * 2));
+  const scale = Math.min(
+    (width - margin * 2) / (model.viewExtent * 2),
+    (height - margin * 2) / (model.viewExtent * 2)
+  );
   return {
     x: width / 2 + x * scale,
     y: height / 2 - y * scale,
@@ -514,6 +532,33 @@ function drawArrowHead(ctx, from, to, color) {
   ctx.restore();
 }
 
+function drawMeasureSegment(ctx, x, y1, y2, label, color) {
+  const head = 7;
+  const top = Math.min(y1, y2);
+  const bottom = Math.max(y1, y2);
+  const mid = (top + bottom) / 2;
+
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x, top);
+  ctx.lineTo(x, bottom);
+  ctx.moveTo(x, top);
+  ctx.lineTo(x - head, top + head);
+  ctx.moveTo(x, top);
+  ctx.lineTo(x + head, top + head);
+  ctx.moveTo(x, bottom);
+  ctx.lineTo(x - head, bottom - head);
+  ctx.moveTo(x, bottom);
+  ctx.lineTo(x + head, bottom - head);
+  ctx.stroke();
+  ctx.font = "600 16px 'Microsoft YaHei'";
+  ctx.fillText(label, x + 10, mid - 4);
+  ctx.restore();
+}
+
 function drawSlice(model) {
   const width = sliceCanvas.width;
   const height = sliceCanvas.height;
@@ -524,8 +569,8 @@ function drawSlice(model) {
 
   sliceCtx.save();
   sliceCtx.setLineDash([6, 6]);
-  const axisTop = projectToCanvas(model, 0, model.extent, width, height);
-  const axisBottom = projectToCanvas(model, 0, -model.extent, width, height);
+  const axisTop = projectToCanvas(model, 0, model.viewExtent, width, height);
+  const axisBottom = projectToCanvas(model, 0, -model.viewExtent, width, height);
   sliceCtx.strokeStyle = "rgba(47, 127, 183, 0.45)";
   sliceCtx.lineWidth = 2;
   sliceCtx.beginPath();
@@ -533,6 +578,11 @@ function drawSlice(model) {
   sliceCtx.lineTo(axisBottom.x, axisBottom.y);
   sliceCtx.stroke();
   sliceCtx.restore();
+
+  const center = projectToCanvas(model, 0, 0, width, height);
+  const topShell = projectToCanvas(model, 0, model.radius, width, height);
+  const chargePoint = projectToCanvas(model, 0, model.a, width, height);
+  const radiusPixels = center.scale * model.radius;
 
   if (params.showEquipotentialSurfaces) {
     const contourColors = ["#df6d3f", "#d79837", "#7b9f3e"];
@@ -585,9 +635,6 @@ function drawSlice(model) {
     sliceCtx.restore();
   }
 
-  const center = projectToCanvas(model, 0, 0, width, height);
-  const radiusPixels = center.scale * model.radius;
-
   sliceCtx.save();
   sliceCtx.fillStyle = "rgba(25, 72, 78, 0.05)";
   sliceCtx.strokeStyle = "#19484e";
@@ -614,19 +661,58 @@ function drawSlice(model) {
   sliceCtx.stroke();
   sliceCtx.restore();
 
+  sliceCtx.save();
+  sliceCtx.strokeStyle = "rgba(25, 72, 78, 0.22)";
+  sliceCtx.lineWidth = 1;
+  sliceCtx.beginPath();
+  sliceCtx.moveTo(center.x - radiusPixels - 40, center.y);
+  sliceCtx.lineTo(center.x, center.y);
+  sliceCtx.moveTo(center.x - radiusPixels - 40, topShell.y);
+  sliceCtx.lineTo(center.x, topShell.y);
+  sliceCtx.moveTo(center.x + radiusPixels + 40, topShell.y);
+  sliceCtx.lineTo(center.x, topShell.y);
+  sliceCtx.moveTo(center.x + radiusPixels + 40, chargePoint.y);
+  sliceCtx.lineTo(center.x, chargePoint.y);
+  sliceCtx.stroke();
+  sliceCtx.restore();
+
+  drawMeasureSegment(
+    sliceCtx,
+    center.x - radiusPixels - 40,
+    center.y,
+    topShell.y,
+    `R = ${fmt(model.radius, 2)}`,
+    "#19484e"
+  );
+  drawMeasureSegment(
+    sliceCtx,
+    center.x + radiusPixels + 40,
+    topShell.y,
+    chargePoint.y,
+    `d = a - R = ${fmt(model.gap, 2)}`,
+    "#c77434"
+  );
+
   if (params.showImageCharge) {
     const imagePoint = projectToCanvas(model, 0, model.b, width, height);
     sliceCtx.save();
     sliceCtx.setLineDash([6, 5]);
-    sliceCtx.strokeStyle = "rgba(126, 143, 149, 0.8)";
+    sliceCtx.strokeStyle = "rgba(96, 112, 120, 0.9)";
     sliceCtx.lineWidth = 2;
     sliceCtx.beginPath();
+    sliceCtx.moveTo(center.x + 18, center.y);
+    sliceCtx.lineTo(imagePoint.x + 18, imagePoint.y);
     sliceCtx.arc(imagePoint.x, imagePoint.y, 9, 0, Math.PI * 2);
     sliceCtx.stroke();
     sliceCtx.restore();
+    sliceCtx.beginPath();
+    sliceCtx.fillStyle = "rgba(96, 112, 120, 0.78)";
+    sliceCtx.arc(imagePoint.x, imagePoint.y, 5, 0, Math.PI * 2);
+    sliceCtx.fill();
     sliceCtx.fillStyle = "#607078";
     sliceCtx.font = "600 18px 'Microsoft YaHei'";
     sliceCtx.fillText("A'", imagePoint.x + 12, imagePoint.y - 12);
+    sliceCtx.fillText(`b = ${fmt(model.b, 2)}`, imagePoint.x + 18, imagePoint.y + 18);
   }
 
   Object.entries(model.points).forEach(([key, point]) => {
@@ -655,12 +741,72 @@ function updateFormula(model) {
   formulaText.textContent =
     `q' = -qR / a = ${fmt(model.qi, 3)}\n` +
     `b = R² / a = ${fmt(model.b, 3)}\n` +
+    `a / R = ${fmt(model.ratio, 3)}，|q'| / |q| = ${fmt(model.imageRatio, 3)}\n` +
     `V_out = k(q / r₁ + q' / r₂)\n` +
     `r < R 时：V = 0，E = 0`;
 }
 
 function vectorText(field) {
   return `(${fmt(field.x, 3)}, ${fmt(field.y, 3)})`;
+}
+
+function updateInsights(model) {
+  const fieldM = fieldAt(model, model.points.M.x, model.points.M.y);
+  const fieldN = fieldAt(model, model.points.N.x, model.points.N.y);
+  const magM = Math.hypot(fieldM.x, fieldM.y);
+  const magN = Math.hypot(fieldN.x, fieldN.y);
+  const potentialM = potentialAt(model, model.points.M.x, model.points.M.y);
+  const potentialN = potentialAt(model, model.points.N.x, model.points.N.y);
+  const samePotential = Math.abs(potentialM - potentialN) < 1e-3;
+  const sameMagnitude = Math.abs(magM - magN) < 1e-3;
+  const ratioComment =
+    model.ratio < 1.7
+      ? "球壳相对较大，外场被改造得很明显，球面上端场线会更集中。"
+      : model.ratio < 2.3
+        ? "球壳和外电荷距离处于中等比例，适合观察镜像电荷位置与强弱变化。"
+        : "球壳相对较小，外场改造较弱，整体更接近单个点电荷的分布。";
+
+  const insights = [
+    {
+      title: "壳内区域",
+      tag: "必判",
+      text: `B、O 都在球壳内部，所以 V(B)=V(O)=0，E(B)=E(O)=0。接地后，壳内判断先看“在不在壳内”，再谈别的。`,
+    },
+    {
+      title: "对称点比较",
+      tag: "常考",
+      text: `M、N 关于对称轴镜像，当前 ${samePotential ? "V(M)=V(N)" : "V(M)≈V(N)"}，${sameMagnitude ? "|E(M)|=|E(N)|" : "|E(M)|≈|E(N)|"}，但左右方向分量相反。`,
+    },
+    {
+      title: "参数变化怎么读",
+      tag: "看参数",
+      text: `当前 R=${fmt(model.radius, 2)}，a=${fmt(model.a, 2)}，所以 a/R=${fmt(model.ratio, 2)}。在 a 保持不变时，R 越大，|q'|/|q|=R/a 越大，球壳对外场的影响越强。${ratioComment}`,
+    },
+    {
+      title: "镜像电荷在做什么",
+      tag: "镜像",
+      text: `镜像电荷不是实际电荷，而是用来重建球外电场的辅助构型。开启后会显示 A'、b 和 q'，其中 q'=${fmt(model.qi, 2)}，b=${fmt(model.b, 2)}。`,
+    },
+    {
+      title: "释放 A 点电荷",
+      tag: "受力",
+      text: `镜像电荷与真实电荷总是异号，所以合力始终指向球壳。当前若从 A 点释放，它会沿对称轴向下靠近球壳。`,
+    },
+  ];
+
+  insightList.innerHTML = insights
+    .map(
+      (item) => `
+        <article class="insight-card">
+          <div class="insight-top">
+            <div class="insight-title">${item.title}</div>
+            <span class="insight-tag">${item.tag}</span>
+          </div>
+          <div class="insight-text">${item.text}</div>
+        </article>
+      `
+    )
+    .join("");
 }
 
 function updateReadouts(model) {
@@ -791,8 +937,8 @@ function buildShell(model) {
     opacity: 0.65,
   });
   const axisGeometry = new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(0, -model.extent, 0),
-    new THREE.Vector3(0, model.extent, 0),
+    new THREE.Vector3(0, -model.viewExtent, 0),
+    new THREE.Vector3(0, model.viewExtent, 0),
   ]);
   state.axisLine = new THREE.Line(axisGeometry, axisMaterial);
   state.axisLine.computeLineDistances();
@@ -821,11 +967,40 @@ function buildShell(model) {
   const imageMaterial = new THREE.MeshStandardMaterial({
     color: palette.image,
     transparent: true,
-    opacity: params.showImageCharge ? 0.6 : 0,
+    opacity: params.showImageCharge ? 0.9 : 0,
   });
   state.imageChargeMesh = new THREE.Mesh(realChargeGeometry, imageMaterial);
   state.imageChargeMesh.position.set(0, model.b, 0);
   state.shellGroup.add(state.imageChargeMesh);
+
+  if (params.showImageCharge) {
+    const guideMaterial = new THREE.LineDashedMaterial({
+      color: palette.image,
+      dashSize: 0.08,
+      gapSize: 0.05,
+      transparent: true,
+      opacity: 0.8,
+    });
+    const guideGeometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, model.b, 0),
+      new THREE.Vector3(0, model.a, 0),
+    ]);
+    const guideLine = new THREE.Line(guideGeometry, guideMaterial);
+    guideLine.computeLineDistances();
+    state.shellGroup.add(guideLine);
+
+    const imageHalo = new THREE.Mesh(
+      new THREE.SphereGeometry(model.chargeRadius * 1.7, 18, 18),
+      new THREE.MeshBasicMaterial({
+        color: palette.image,
+        transparent: true,
+        opacity: 0.16,
+      })
+    );
+    imageHalo.position.copy(state.imageChargeMesh.position);
+    state.shellGroup.add(imageHalo);
+  }
 
   Object.entries(model.points)
     .filter(([name]) => name !== "A")
@@ -946,7 +1121,7 @@ function buildEquipotentialMeshes(model) {
 
 function refreshComputation() {
   state.model = buildModel();
-  state.viewExtent = state.model.extent;
+  state.viewExtent = state.model.viewExtent;
   state.meridianLines = buildFieldLines(state.model);
 
   const contours = buildContours(state.model);
@@ -959,18 +1134,21 @@ function refreshComputation() {
   buildFieldLineMeshes(state.model);
   buildEquipotentialMeshes(state.model);
   updateFormula(state.model);
+  updateInsights(state.model);
   updateReadouts(state.model);
   drawSlice(state.model);
 
   radiusValue.textContent = fmt(state.model.radius, 2);
-  distanceValue.textContent = `${fmt(state.model.a / state.model.radius, 2)} R`;
+  distanceInput.min = fmt(state.model.radius + MIN_GAP, 2);
+  distanceInput.value = fmt(state.model.a, 2);
+  distanceValue.textContent = `${fmt(state.model.a, 2)}  |  a/R = ${fmt(state.model.ratio, 2)}`;
   chargeValue.textContent = `${state.model.q > 0 ? "+" : ""}${fmt(state.model.q, 2)}`;
 
-  if (state.camera) {
-    const viewDistance = Math.max(state.model.extent * 1.5, 5.4);
-    state.camera.position.set(viewDistance * 0.74, viewDistance * 0.56, viewDistance * 0.78);
-    state.controls.target.set(0, state.model.radius * 0.35, 0);
+  if (state.camera && !state.hasInitialFrame) {
+    state.camera.position.set(5.8, 4.4, 6.1);
+    state.controls.target.set(0, 0.9, 0);
     state.controls.update();
+    state.hasInitialFrame = true;
   }
 }
 
@@ -1002,7 +1180,7 @@ function attachEvents() {
   });
 
   distanceInput.addEventListener("input", (event) => {
-    params.distanceFactor = Number(event.target.value);
+    params.chargeDistance = Number(event.target.value);
     refreshComputation();
   });
 

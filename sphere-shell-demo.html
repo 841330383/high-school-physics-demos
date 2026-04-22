@@ -25,47 +25,63 @@
       </header>
 
       <main class="demo-layout">
-        <section class="demo-panel viewer-panel">
-          <div class="panel-head">
-            <div>
-              <h2 class="panel-title">三维场景</h2>
-              <p class="panel-note">
-                蓝色为电场线，暖色半透明曲面为等势面，深色球面表示接地导体球壳。
-              </p>
+        <div class="visual-stack">
+          <section class="demo-panel viewer-panel">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">三维场景</h2>
+                <p class="panel-note">
+                  蓝色为电场线，暖色半透明曲面为等势面，深色球面表示接地导体球壳。
+                </p>
+              </div>
+              <div class="legend" aria-label="图例">
+                <span class="legend-item">
+                  <span class="legend-dot legend-dot-field"></span>
+                  电场线
+                </span>
+                <span class="legend-item">
+                  <span class="legend-dot legend-dot-surface"></span>
+                  等势面
+                </span>
+                <span class="legend-item">
+                  <span class="legend-dot legend-dot-shell"></span>
+                  接地球壳
+                </span>
+              </div>
             </div>
-            <div class="legend" aria-label="图例">
-              <span class="legend-item">
-                <span class="legend-dot legend-dot-field"></span>
-                电场线
-              </span>
-              <span class="legend-item">
-                <span class="legend-dot legend-dot-surface"></span>
-                等势面
-              </span>
-              <span class="legend-item">
-                <span class="legend-dot legend-dot-shell"></span>
-                接地球壳
-              </span>
+            <div class="scene-wrap">
+              <div class="scene3d" id="scene3d"></div>
             </div>
-          </div>
-          <div class="scene-wrap">
-            <div class="scene3d" id="scene3d"></div>
-          </div>
-          <div class="viewer-footer">
-            <article class="mini-card">
-              <p class="mini-label">边界条件</p>
-              <p class="mini-value">球面电势恒为 0，壳内场强恒为 0</p>
-            </article>
-            <article class="mini-card">
-              <p class="mini-label">求场方法</p>
-              <p class="mini-value">球外区域用“真实电荷 + 镜像电荷”精确重建</p>
-            </article>
-            <article class="mini-card">
-              <p class="mini-label">使用方式</p>
-              <p class="mini-value">拖动视角后对照下方二维剖面判断关键点关系</p>
-            </article>
-          </div>
-        </section>
+            <div class="viewer-footer">
+              <article class="mini-card">
+                <p class="mini-label">边界条件</p>
+                <p class="mini-value">球面电势恒为 0，壳内场强恒为 0</p>
+              </article>
+              <article class="mini-card">
+                <p class="mini-label">求场方法</p>
+                <p class="mini-value">球外区域用“真实电荷 + 镜像电荷”精确重建</p>
+              </article>
+              <article class="mini-card">
+                <p class="mini-label">使用方式</p>
+                <p class="mini-value">三维看整体分布，二维专门拿来判定关键点</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="demo-panel slice-panel">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">二维剖面</h2>
+                <p class="panel-note">
+                  这里直接用于判定 A、B、O、M、N 的关系，并观察半径和外电荷位置变化。
+                </p>
+              </div>
+            </div>
+            <div class="slice-wrap">
+              <canvas class="slice-canvas" id="sliceCanvas" width="1200" height="720"></canvas>
+            </div>
+          </section>
+        </div>
 
         <aside class="demo-panel control-panel">
           <section class="control-group">
@@ -81,10 +97,10 @@
 
             <div class="control-item">
               <div class="control-row">
-                <span class="control-label">外电荷距离 a / R</span>
+                <span class="control-label">球心到外电荷距离 a</span>
                 <span class="control-value" id="distanceValue"></span>
               </div>
-              <input class="range-input" id="distanceInput" type="range" min="1.2" max="3.2" step="0.05" value="1.85" />
+              <input class="range-input" id="distanceInput" type="range" min="1.45" max="4.20" step="0.05" value="2.60" />
             </div>
 
             <div class="control-item">
@@ -115,8 +131,8 @@
                 <input id="surfaceToggle" type="checkbox" checked />
               </div>
               <div class="toggle-item">
-                <label for="imageToggle">显示镜像电荷</label>
-                <input id="imageToggle" type="checkbox" />
+                <label for="imageToggle">显示镜像构型</label>
+                <input id="imageToggle" type="checkbox" checked />
               </div>
             </div>
           </section>
@@ -127,6 +143,11 @@
               镜像电荷法针对“接地导体球壳 + 球外点电荷”有精确解：
               <code id="formulaText"></code>
             </div>
+          </section>
+
+          <section class="insight-group">
+            <h2 class="group-title">教学结论</h2>
+            <div class="insight-list" id="insightList"></div>
           </section>
 
           <section class="readout-group">
@@ -146,20 +167,6 @@
             </div>
           </section>
         </aside>
-
-        <section class="demo-panel slice-panel">
-          <div class="panel-head">
-            <div>
-              <h2 class="panel-title">二维剖面</h2>
-              <p class="panel-note">
-                下图展示对称平面内的电场线与等势线，并标出 A、B、O、M、N 等关键点。
-              </p>
-            </div>
-          </div>
-          <div class="slice-wrap">
-            <canvas class="slice-canvas" id="sliceCanvas" width="1200" height="720"></canvas>
-          </div>
-        </section>
       </main>
     </div>
 

@@ -126,6 +126,12 @@ select {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) 360px;
   gap: 20px;
+  align-items: start;
+}
+
+.visual-stack {
+  display: grid;
+  gap: 20px;
 }
 
 .demo-panel {
@@ -259,6 +265,7 @@ select {
 }
 
 .control-group,
+.insight-group,
 .readout-group,
 .formula-group,
 .hint-group {
@@ -342,6 +349,7 @@ select {
 }
 
 .formula-box,
+.insight-card,
 .hint-box,
 .readout-card {
   padding: 14px;
@@ -364,6 +372,44 @@ select {
 .readout-list {
   display: grid;
   gap: 10px;
+}
+
+.insight-list {
+  display: grid;
+  gap: 10px;
+}
+
+.insight-card {
+  display: grid;
+  gap: 8px;
+}
+
+.insight-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.insight-title {
+  font-weight: 700;
+}
+
+.insight-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  color: var(--demo-accent);
+  background: rgba(25, 72, 78, 0.08);
+}
+
+.insight-text {
+  color: var(--demo-muted);
+  font-size: 0.92rem;
+  line-height: 1.65;
 }
 
 .readout-card {
@@ -391,7 +437,6 @@ select {
 }
 
 .slice-panel {
-  grid-column: 1 / -1;
   padding-bottom: 22px;
 }
 
@@ -412,12 +457,12 @@ select {
     grid-template-columns: 1fr;
   }
 
-  .control-panel {
-    order: 2;
+  .visual-stack {
+    order: 1;
   }
 
-  .slice-panel {
-    grid-column: auto;
+  .control-panel {
+    order: 2;
   }
 }
 
