@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>高中物理教学演示</title>
+    <meta
+      name="description"
+      content="按人教版高中物理册次与章节建立检索目录的教学演示网站。"
+    />
+    <meta property="og:title" content="高中物理教学演示" />
+    <meta
+      property="og:description"
+      content="按册次与章节整理的高中物理教学演示目录。"
+    />
+    <meta property="og:type" content="website" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <main>
+        <section class="hero reveal" id="top">
+          <p class="hero-label">HIGH SCHOOL PHYSICS</p>
+          <h1>高中物理教学演示</h1>
+          <p class="hero-copy">
+            按册次与章节建立索引，便于后续持续补充课堂演示、实验模拟与教学素材。
+          </p>
+          <div class="hero-meta" aria-label="站点信息">
+            <span>人教版</span>
+            <span>6 册结构</span>
+            <span>章节索引</span>
+          </div>
+        </section>
+
+        <section class="workspace reveal" id="catalog">
+          <aside class="sidebar">
+            <div class="sidebar-panel search-panel">
+              <label class="field-label" for="searchInput">快速检索</label>
+              <input
+                id="searchInput"
+                class="search-input"
+                type="search"
+                placeholder="搜索册次或章节"
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="sidebar-panel">
+              <p class="field-label">册次定位</p>
+              <div class="jump-list" id="jumpList"></div>
+            </div>
+          </aside>
+
+          <div class="catalog-area">
+            <div class="filter-bar" id="filterBar" aria-label="目录筛选">
+              <button class="filter-chip is-active" data-filter="all" type="button">
+                全部
+              </button>
+              <button class="filter-chip" data-filter="必修" type="button">必修</button>
+              <button class="filter-chip" data-filter="选择性必修" type="button">
+                选择性必修
+              </button>
+            </div>
+
+            <div class="catalog-grid" id="catalogContainer"></div>
+            <div class="empty-state is-hidden" id="emptyState">未找到匹配章节</div>
+          </div>
+        </section>
+
+        <section class="guide reveal" id="guide">
+          <article class="guide-card">
+            <p class="guide-label">目录说明</p>
+            <h2>按册次浏览，按章节补充</h2>
+            <p>
+              当前先完成目录层级与检索结构，后续可继续为各章节补充动画、实验、例题、板书或课件入口。
+            </p>
+          </article>
+          <article class="guide-card guide-card-accent">
+            <p class="guide-label">内容扩展</p>
+            <h2>后续可继续加入</h2>
+            <ul class="guide-list">
+              <li>实验演示</li>
+              <li>课堂动画</li>
+              <li>题型讲解</li>
+              <li>PPT 素材</li>
+            </ul>
+          </article>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <p>© <span id="year"></span> 高中物理教学演示</p>
+      </footer>
+    </div>
+
+    <script src="catalog-data.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
