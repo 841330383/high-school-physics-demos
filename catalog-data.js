@@ -27,7 +27,14 @@ window.catalogData = [
     type: "必修",
     title: "必修第三册",
     chapters: [
-      "静电场",
+      {
+        title: "静电场",
+        demo: {
+          label: "球壳与球外点电荷",
+          href: "sphere-shell-demo.html",
+          summary: "三维电场线、等势面与接地球壳镜像电荷演示",
+        },
+      },
       "电路与电流",
       "磁场",
     ],

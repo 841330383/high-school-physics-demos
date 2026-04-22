@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>球壳与球外点电荷 | 高中物理教学演示</title>
+    <meta
+      name="description"
+      content="接地导体球壳与球外点电荷的三维电场线、等势面与二维剖面演示。"
+    />
+    <link rel="stylesheet" href="sphere-shell-demo.css" />
+  </head>
+  <body>
+    <div class="demo-shell">
+      <header class="demo-top">
+        <div>
+          <p class="demo-subtitle">Static Electric Field</p>
+          <h1 class="demo-title">接地球壳与球外点电荷</h1>
+          <p class="demo-intro">
+            这个演示使用镜像电荷法构造接地导体球壳外部的精确静电场，
+            适合观察球面零电势、壳内场强为零、球外对称点电势关系以及外部电场线分布。
+          </p>
+        </div>
+        <a class="demo-back" href="./index.html#bx3">返回目录</a>
+      </header>
+
+      <main class="demo-layout">
+        <section class="demo-panel viewer-panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">三维场景</h2>
+              <p class="panel-note">
+                蓝色为电场线，暖色半透明曲面为等势面，深色球面表示接地导体球壳。
+              </p>
+            </div>
+            <div class="legend" aria-label="图例">
+              <span class="legend-item">
+                <span class="legend-dot legend-dot-field"></span>
+                电场线
+              </span>
+              <span class="legend-item">
+                <span class="legend-dot legend-dot-surface"></span>
+                等势面
+              </span>
+              <span class="legend-item">
+                <span class="legend-dot legend-dot-shell"></span>
+                接地球壳
+              </span>
+            </div>
+          </div>
+          <div class="scene-wrap">
+            <div class="scene3d" id="scene3d"></div>
+          </div>
+          <div class="viewer-footer">
+            <article class="mini-card">
+              <p class="mini-label">边界条件</p>
+              <p class="mini-value">球面电势恒为 0，壳内场强恒为 0</p>
+            </article>
+            <article class="mini-card">
+              <p class="mini-label">求场方法</p>
+              <p class="mini-value">球外区域用“真实电荷 + 镜像电荷”精确重建</p>
+            </article>
+            <article class="mini-card">
+              <p class="mini-label">使用方式</p>
+              <p class="mini-value">拖动视角后对照下方二维剖面判断关键点关系</p>
+            </article>
+          </div>
+        </section>
+
+        <aside class="demo-panel control-panel">
+          <section class="control-group">
+            <h2 class="group-title">参数控制</h2>
+
+            <div class="control-item">
+              <div class="control-row">
+                <span class="control-label">球壳半径 R</span>
+                <span class="control-value" id="radiusValue"></span>
+              </div>
+              <input class="range-input" id="radiusInput" type="range" min="1.0" max="2.2" step="0.05" value="1.4" />
+            </div>
+
+            <div class="control-item">
+              <div class="control-row">
+                <span class="control-label">外电荷距离 a / R</span>
+                <span class="control-value" id="distanceValue"></span>
+              </div>
+              <input class="range-input" id="distanceInput" type="range" min="1.2" max="3.2" step="0.05" value="1.85" />
+            </div>
+
+            <div class="control-item">
+              <div class="control-row">
+                <span class="control-label">电荷量 |Q|</span>
+                <span class="control-value" id="chargeValue"></span>
+              </div>
+              <input class="range-input" id="chargeInput" type="range" min="0.5" max="1.5" step="0.05" value="1.0" />
+            </div>
+
+            <div class="control-item">
+              <div class="control-row">
+                <span class="control-label">外电荷符号</span>
+              </div>
+              <div class="segmented" id="signToggle">
+                <button class="segment-button" data-sign="-1" type="button">负电荷</button>
+                <button class="segment-button" data-sign="1" type="button">正电荷</button>
+              </div>
+            </div>
+
+            <div class="toggle-grid">
+              <div class="toggle-item">
+                <label for="fieldToggle">显示电场线</label>
+                <input id="fieldToggle" type="checkbox" checked />
+              </div>
+              <div class="toggle-item">
+                <label for="surfaceToggle">显示等势面</label>
+                <input id="surfaceToggle" type="checkbox" checked />
+              </div>
+              <div class="toggle-item">
+                <label for="imageToggle">显示镜像电荷</label>
+                <input id="imageToggle" type="checkbox" />
+              </div>
+            </div>
+          </section>
+
+          <section class="formula-group">
+            <h2 class="group-title">模型公式</h2>
+            <div class="formula-box">
+              镜像电荷法针对“接地导体球壳 + 球外点电荷”有精确解：
+              <code id="formulaText"></code>
+            </div>
+          </section>
+
+          <section class="readout-group">
+            <h2 class="group-title">关键点读数</h2>
+            <div class="readout-list" id="readoutList"></div>
+          </section>
+
+          <section class="hint-group">
+            <h2 class="group-title">判题抓手</h2>
+            <div class="hint-box">
+              <ul>
+                <li>球壳接地时，球面与壳内空腔都处于同一零电势。</li>
+                <li>壳内任意点场强都为零，所以内部点只看“是否在壳内”。</li>
+                <li>M、N 关于对称轴镜像时，电势相同，场强大小相同，但矢量方向通常不同。</li>
+                <li>若释放外部负电荷，它会被吸向球壳，静电力做正功，电势能减小。</li>
+              </ul>
+            </div>
+          </section>
+        </aside>
+
+        <section class="demo-panel slice-panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">二维剖面</h2>
+              <p class="panel-note">
+                下图展示对称平面内的电场线与等势线，并标出 A、B、O、M、N 等关键点。
+              </p>
+            </div>
+          </div>
+          <div class="slice-wrap">
+            <canvas class="slice-canvas" id="sliceCanvas" width="1200" height="720"></canvas>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="sphere-shell-demo.js"></script>
+  </body>
+</html>

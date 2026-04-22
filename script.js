@@ -9,14 +9,42 @@ const emptyState = document.querySelector("#emptyState");
 let activeFilter = "all";
 let activeQuery = "";
 
-function createChapterCard(title, index) {
+function normalizeChapter(chapter) {
+  if (typeof chapter === "string") {
+    return {
+      title: chapter,
+      demo: null,
+    };
+  }
+
+  return {
+    title: chapter.title || "",
+    demo: chapter.demo || null,
+  };
+}
+
+function createChapterCard(chapter, index) {
+  const normalized = normalizeChapter(chapter);
+  const title = normalized.title;
+  const demo = normalized.demo;
+  const demoMarkup = demo
+    ? `
+      <div class="chapter-actions">
+        <a class="chapter-link" href="${demo.href}">${demo.label}</a>
+      </div>
+      <span class="chapter-placeholder">${demo.summary || "已添加演示"}</span>
+    `
+    : `
+      <span class="chapter-placeholder">演示条目预留</span>
+      <span class="chapter-empty">未添加</span>
+    `;
+
   return `
-    <article class="chapter-card" data-search="${title}">
+    <article class="chapter-card" data-search="${title} ${demo?.label || ""} ${demo?.summary || ""}">
       <p class="chapter-index">Chapter ${String(index + 1).padStart(2, "0")}</p>
       <h3>${title}</h3>
       <div class="chapter-meta">
-        <span class="chapter-placeholder">演示条目预留</span>
-        <span class="chapter-empty">未添加</span>
+        ${demoMarkup}
       </div>
     </article>
   `;
