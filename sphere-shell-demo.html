@@ -84,43 +84,23 @@
         </div>
 
         <aside class="demo-panel control-panel">
-          <section class="control-group">
-            <h2 class="group-title">参数控制</h2>
-
-            <div class="control-item">
-              <div class="control-row">
-                <span class="control-label">球壳半径 R</span>
-                <span class="control-value" id="radiusValue"></span>
-              </div>
-              <input class="range-input" id="radiusInput" type="range" min="1.0" max="2.2" step="0.05" value="1.4" />
+          <section class="intro-group">
+            <h2 class="group-title">模型介绍</h2>
+            <div class="info-card">
+              接地导体球壳外有一个点电荷时，球外电场可以用“真实电荷 + 镜像电荷”来等效重建。
+              这个模型重点用于判断壳内是否为零场、镜像位置关系，以及球外对称点的电势和场强。
             </div>
+          </section>
 
-            <div class="control-item">
-              <div class="control-row">
-                <span class="control-label">球心到外电荷距离 a</span>
-                <span class="control-value" id="distanceValue"></span>
-              </div>
-              <input class="range-input" id="distanceInput" type="range" min="1.45" max="4.20" step="0.05" value="2.60" />
+          <section class="formula-group">
+            <h2 class="group-title">模型公式</h2>
+            <div class="formula-box">
+              <div class="formula-board" id="formulaBoard"></div>
             </div>
+          </section>
 
-            <div class="control-item">
-              <div class="control-row">
-                <span class="control-label">电荷量 |Q|</span>
-                <span class="control-value" id="chargeValue"></span>
-              </div>
-              <input class="range-input" id="chargeInput" type="range" min="0.5" max="1.5" step="0.05" value="1.0" />
-            </div>
-
-            <div class="control-item">
-              <div class="control-row">
-                <span class="control-label">外电荷符号</span>
-              </div>
-              <div class="segmented" id="signToggle">
-                <button class="segment-button" data-sign="-1" type="button">负电荷</button>
-                <button class="segment-button" data-sign="1" type="button">正电荷</button>
-              </div>
-            </div>
-
+          <section class="display-group">
+            <h2 class="group-title">显示设置</h2>
             <div class="toggle-grid">
               <div class="toggle-item">
                 <label for="fieldToggle">显示电场线</label>
@@ -130,40 +110,6 @@
                 <label for="surfaceToggle">显示等势面</label>
                 <input id="surfaceToggle" type="checkbox" checked />
               </div>
-              <div class="toggle-item">
-                <label for="imageToggle">显示镜像构型</label>
-                <input id="imageToggle" type="checkbox" checked />
-              </div>
-            </div>
-          </section>
-
-          <section class="formula-group">
-            <h2 class="group-title">模型公式</h2>
-            <div class="formula-box">
-              <p class="formula-caption">课堂演示只看这三条核心关系：</p>
-              <div class="formula-board" id="formulaBoard"></div>
-            </div>
-          </section>
-
-          <section class="insight-group">
-            <h2 class="group-title">教学结论</h2>
-            <div class="insight-list" id="insightList"></div>
-          </section>
-
-          <section class="readout-group">
-            <h2 class="group-title">关键点读数</h2>
-            <div class="readout-list" id="readoutList"></div>
-          </section>
-
-          <section class="hint-group">
-            <h2 class="group-title">判题抓手</h2>
-            <div class="hint-box">
-              <ul>
-                <li>球壳接地时，球面与壳内空腔都处于同一零电势。</li>
-                <li>壳内任意点场强都为零，所以内部点只看“是否在壳内”。</li>
-                <li>M、N 关于对称轴镜像时，电势相同，场强大小相同，但矢量方向通常不同。</li>
-                <li>若释放外部负电荷，它会被吸向球壳，静电力做正功，电势能减小。</li>
-              </ul>
             </div>
           </section>
         </aside>

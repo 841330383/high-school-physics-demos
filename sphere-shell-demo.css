@@ -260,15 +260,17 @@ select {
 .control-panel {
   padding: 22px;
   display: grid;
-  gap: 18px;
+  gap: 16px;
   align-self: start;
 }
 
-.control-group,
-.insight-group,
-.readout-group,
+.intro-group,
+.display-group,
 .formula-group,
-.hint-group {
+.hint-group,
+.readout-group,
+.insight-group,
+.control-group {
   display: grid;
   gap: 12px;
 }
@@ -277,54 +279,6 @@ select {
   margin: 0;
   font-size: 1.02rem;
   font-weight: 700;
-}
-
-.control-item {
-  display: grid;
-  gap: 8px;
-}
-
-.control-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.control-label {
-  color: var(--demo-muted);
-  font-size: 0.93rem;
-}
-
-.control-value {
-  color: var(--demo-accent);
-  font-weight: 600;
-}
-
-.range-input {
-  width: 100%;
-}
-
-.segmented {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.segment-button {
-  min-height: 42px;
-  border: 1px solid var(--demo-line);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-  color: var(--demo-muted);
-  cursor: pointer;
-}
-
-.segment-button.is-active {
-  border-color: rgba(25, 72, 78, 0.28);
-  background: var(--demo-accent-soft);
-  color: var(--demo-accent);
-  font-weight: 600;
 }
 
 .toggle-grid {
@@ -348,6 +302,7 @@ select {
   color: var(--demo-muted);
 }
 
+.info-card,
 .formula-box,
 .insight-card,
 .hint-box,
@@ -358,30 +313,21 @@ select {
   background: rgba(255, 255, 255, 0.66);
 }
 
-.formula-caption {
-  margin: 0 0 12px;
+.info-card {
   color: var(--demo-muted);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  line-height: 1.75;
 }
 
 .formula-board {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .formula-line {
-  display: grid;
-  gap: 6px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-radius: 14px;
   background: rgba(25, 72, 78, 0.06);
-}
-
-.formula-label {
-  color: var(--demo-warm);
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .formula-main {
@@ -391,14 +337,9 @@ select {
     "STSong",
     "Noto Serif CJK SC",
     serif;
-  font-size: 1.55rem;
+  font-size: 1.85rem;
   font-weight: 700;
-  line-height: 1.2;
-}
-
-.formula-note {
-  color: var(--demo-muted);
-  font-size: 0.86rem;
+  line-height: 1.16;
 }
 
 .readout-list {
@@ -515,7 +456,7 @@ select {
   }
 
   .formula-main {
-    font-size: 1.3rem;
+    font-size: 1.45rem;
   }
 
   .viewer-footer {

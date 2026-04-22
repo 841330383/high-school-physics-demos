@@ -14,21 +14,10 @@ const params = {
 const sceneHost = document.querySelector("#scene3d");
 const sliceCanvas = document.querySelector("#sliceCanvas");
 const sliceCtx = sliceCanvas.getContext("2d");
-const readoutList = document.querySelector("#readoutList");
 const formulaBoard = document.querySelector("#formulaBoard");
-const insightList = document.querySelector("#insightList");
 
-const radiusInput = document.querySelector("#radiusInput");
-const distanceInput = document.querySelector("#distanceInput");
-const chargeInput = document.querySelector("#chargeInput");
 const fieldToggle = document.querySelector("#fieldToggle");
 const surfaceToggle = document.querySelector("#surfaceToggle");
-const imageToggle = document.querySelector("#imageToggle");
-const signToggle = document.querySelector("#signToggle");
-
-const radiusValue = document.querySelector("#radiusValue");
-const distanceValue = document.querySelector("#distanceValue");
-const chargeValue = document.querySelector("#chargeValue");
 
 const palette = {
   shell: 0x19484e,
@@ -738,128 +727,23 @@ function drawSlice(model) {
 }
 
 function updateFormula(model) {
+  if (!formulaBoard) {
+    return;
+  }
+
   const formulas = [
-    {
-      label: "镜像电荷量",
-      main: "q' = -qR / a",
-      note: `当前 q' = ${fmt(model.qi, 2)}`,
-    },
-    {
-      label: "镜像位置",
-      main: "b = R² / a",
-      note: `当前 b = ${fmt(model.b, 2)}`,
-    },
-    {
-      label: "壳内结论",
-      main: "r < R  →  V = 0，E = 0",
-      note: "壳内点先判是否在球壳内部，再判电势和场强。",
-    },
+    "q' = -qR / a",
+    "b = R² / a",
+    "V = k(q / r₁ + q' / r₂)",
+    "r < R  →  V = 0，E = 0",
   ];
 
   formulaBoard.innerHTML = formulas
     .map(
       (item) => `
         <div class="formula-line">
-          <div class="formula-label">${item.label}</div>
-          <div class="formula-main">${item.main}</div>
-          <div class="formula-note">${item.note}</div>
+          <div class="formula-main">${item}</div>
         </div>
-      `
-    )
-    .join("");
-}
-
-function vectorText(field) {
-  return `(${fmt(field.x, 3)}, ${fmt(field.y, 3)})`;
-}
-
-function updateInsights(model) {
-  const fieldM = fieldAt(model, model.points.M.x, model.points.M.y);
-  const fieldN = fieldAt(model, model.points.N.x, model.points.N.y);
-  const magM = Math.hypot(fieldM.x, fieldM.y);
-  const magN = Math.hypot(fieldN.x, fieldN.y);
-  const potentialM = potentialAt(model, model.points.M.x, model.points.M.y);
-  const potentialN = potentialAt(model, model.points.N.x, model.points.N.y);
-  const samePotential = Math.abs(potentialM - potentialN) < 1e-3;
-  const sameMagnitude = Math.abs(magM - magN) < 1e-3;
-  const ratioComment =
-    model.ratio < 1.7
-      ? "球壳相对较大，外场被改造得很明显，球面上端场线会更集中。"
-      : model.ratio < 2.3
-        ? "球壳和外电荷距离处于中等比例，适合观察镜像电荷位置与强弱变化。"
-        : "球壳相对较小，外场改造较弱，整体更接近单个点电荷的分布。";
-
-  const insights = [
-    {
-      title: "壳内区域",
-      tag: "必判",
-      text: `B、O 都在球壳内部，所以 V(B)=V(O)=0，E(B)=E(O)=0。接地后，壳内判断先看“在不在壳内”，再谈别的。`,
-    },
-    {
-      title: "对称点比较",
-      tag: "常考",
-      text: `M、N 关于对称轴镜像，当前 ${samePotential ? "V(M)=V(N)" : "V(M)≈V(N)"}，${sameMagnitude ? "|E(M)|=|E(N)|" : "|E(M)|≈|E(N)|"}，但左右方向分量相反。`,
-    },
-    {
-      title: "参数变化怎么读",
-      tag: "看参数",
-      text: `当前 R=${fmt(model.radius, 2)}，a=${fmt(model.a, 2)}，所以 a/R=${fmt(model.ratio, 2)}。在 a 保持不变时，R 越大，|q'|/|q|=R/a 越大，球壳对外场的影响越强。${ratioComment}`,
-    },
-    {
-      title: "镜像电荷在做什么",
-      tag: "镜像",
-      text: `镜像电荷不是实际电荷，而是用来重建球外电场的辅助构型。开启后会显示 A'、b 和 q'，其中 q'=${fmt(model.qi, 2)}，b=${fmt(model.b, 2)}。`,
-    },
-    {
-      title: "释放 A 点电荷",
-      tag: "受力",
-      text: `镜像电荷与真实电荷总是异号，所以合力始终指向球壳。当前若从 A 点释放，它会沿对称轴向下靠近球壳。`,
-    },
-  ];
-
-  insightList.innerHTML = insights
-    .map(
-      (item) => `
-        <article class="insight-card">
-          <div class="insight-top">
-            <div class="insight-title">${item.title}</div>
-            <span class="insight-tag">${item.tag}</span>
-          </div>
-          <div class="insight-text">${item.text}</div>
-        </article>
-      `
-    )
-    .join("");
-}
-
-function updateReadouts(model) {
-  const readouts = [
-    {
-      name: "A 点",
-      text: `锁定外电荷 Q = ${model.q > 0 ? "+" : ""}${fmt(model.q, 2)}，位于球心上方 a = ${fmt(model.a, 2)}`,
-    },
-    ...["B", "O", "M", "N"].map((name) => {
-      const point = model.points[name];
-      const field = fieldAt(model, point.x, point.y);
-      const magnitude = Math.hypot(field.x, field.y);
-      const potential = potentialAt(model, point.x, point.y);
-
-      return {
-        name: `${name} 点`,
-        text:
-          `V = ${fmt(potential, 3)}，|E| = ${fmt(magnitude, 3)}，` +
-          `E = ${vectorText(field)}`,
-      };
-    }),
-  ];
-
-  readoutList.innerHTML = readouts
-    .map(
-      (item) => `
-        <article class="readout-card">
-          <div class="readout-name">${item.name}</div>
-          <div class="readout-value">${item.text}</div>
-        </article>
       `
     )
     .join("");
@@ -1157,15 +1041,7 @@ function refreshComputation() {
   buildFieldLineMeshes(state.model);
   buildEquipotentialMeshes(state.model);
   updateFormula(state.model);
-  updateInsights(state.model);
-  updateReadouts(state.model);
   drawSlice(state.model);
-
-  radiusValue.textContent = fmt(state.model.radius, 2);
-  distanceInput.min = fmt(state.model.radius + MIN_GAP, 2);
-  distanceInput.value = fmt(state.model.a, 2);
-  distanceValue.textContent = `${fmt(state.model.a, 2)}  |  a/R = ${fmt(state.model.ratio, 2)}`;
-  chargeValue.textContent = `${state.model.q > 0 ? "+" : ""}${fmt(state.model.q, 2)}`;
 
   if (state.camera && !state.hasInitialFrame) {
     state.camera.position.set(5.8, 4.4, 6.1);
@@ -1197,45 +1073,19 @@ function animate() {
 }
 
 function attachEvents() {
-  radiusInput.addEventListener("input", (event) => {
-    params.radius = Number(event.target.value);
-    refreshComputation();
-  });
+  if (fieldToggle) {
+    fieldToggle.addEventListener("change", (event) => {
+      params.showFieldLines = event.target.checked;
+      refreshComputation();
+    });
+  }
 
-  distanceInput.addEventListener("input", (event) => {
-    params.chargeDistance = Number(event.target.value);
-    refreshComputation();
-  });
-
-  chargeInput.addEventListener("input", (event) => {
-    params.chargeMagnitude = Number(event.target.value);
-    refreshComputation();
-  });
-
-  fieldToggle.addEventListener("change", (event) => {
-    params.showFieldLines = event.target.checked;
-    refreshComputation();
-  });
-
-  surfaceToggle.addEventListener("change", (event) => {
-    params.showEquipotentialSurfaces = event.target.checked;
-    refreshComputation();
-  });
-
-  imageToggle.addEventListener("change", (event) => {
-    params.showImageCharge = event.target.checked;
-    refreshComputation();
-  });
-
-  signToggle.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-sign]");
-    if (!button) {
-      return;
-    }
-    params.chargeSign = Number(button.dataset.sign);
-    updateSignButtons();
-    refreshComputation();
-  });
+  if (surfaceToggle) {
+    surfaceToggle.addEventListener("change", (event) => {
+      params.showEquipotentialSurfaces = event.target.checked;
+      refreshComputation();
+    });
+  }
 
   window.addEventListener("resize", () => {
     resizeScene();
@@ -1243,14 +1093,7 @@ function attachEvents() {
   });
 }
 
-function updateSignButtons() {
-  signToggle.querySelectorAll("[data-sign]").forEach((button) => {
-    button.classList.toggle("is-active", Number(button.dataset.sign) === params.chargeSign);
-  });
-}
-
 function init() {
-  updateSignButtons();
   initThree();
   attachEvents();
   refreshComputation();
