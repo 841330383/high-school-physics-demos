@@ -1,17 +1,19 @@
 :root {
-  --bg: #f6f3ee;
-  --bg-strong: #fdfbf8;
-  --panel: rgba(255, 255, 255, 0.78);
-  --panel-strong: #fffdf9;
-  --ink: #1f2d2f;
-  --muted: #617173;
-  --line: rgba(31, 45, 47, 0.1);
-  --line-strong: rgba(31, 45, 47, 0.18);
-  --accent: #29494c;
-  --accent-soft: rgba(41, 73, 76, 0.08);
-  --accent-warm: #a67c52;
-  --shadow: 0 24px 60px rgba(31, 45, 47, 0.08);
-  --radius-xl: 30px;
+  --bg: #f5f5f7;
+  --bg-strong: #fbfbfd;
+  --panel: rgba(255, 255, 255, 0.74);
+  --panel-strong: rgba(255, 255, 255, 0.92);
+  --ink: #111827;
+  --muted: #667085;
+  --line: rgba(17, 24, 39, 0.09);
+  --line-strong: rgba(17, 24, 39, 0.16);
+  --accent: #007aff;
+  --accent-soft: rgba(0, 122, 255, 0.1);
+  --accent-warm: #ff9500;
+  --success: #34c759;
+  --shadow: 0 18px 48px rgba(17, 24, 39, 0.1);
+  --shadow-soft: 0 8px 28px rgba(17, 24, 39, 0.07);
+  --radius-xl: 28px;
   --radius-lg: 22px;
   --radius-md: 16px;
   --radius-sm: 12px;
@@ -25,34 +27,36 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: hidden;
   color: var(--ink);
   font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    "SF Pro Text",
     "PingFang SC",
-    "Hiragino Sans GB",
     "Microsoft YaHei",
-    "Noto Sans CJK SC",
     sans-serif;
   line-height: 1.65;
   background:
-    radial-gradient(circle at top left, rgba(166, 124, 82, 0.1), transparent 24%),
-    radial-gradient(circle at 86% 10%, rgba(41, 73, 76, 0.08), transparent 24%),
-    linear-gradient(180deg, #fbf8f3 0%, var(--bg) 52%, #efe9df 100%);
+    linear-gradient(135deg, rgba(0, 122, 255, 0.1), transparent 28%),
+    linear-gradient(220deg, rgba(52, 199, 89, 0.08), transparent 32%),
+    linear-gradient(180deg, var(--bg-strong) 0%, var(--bg) 56%, #eef1f6 100%);
 }
 
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background-image:
-    linear-gradient(rgba(31, 45, 47, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(31, 45, 47, 0.025) 1px, transparent 1px);
-  background-size: 36px 36px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.8), transparent 88%);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.66), transparent 38%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.22), transparent 55%);
   pointer-events: none;
 }
 
@@ -70,6 +74,7 @@ input {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
   padding: 0 0 48px;
+  position: relative;
 }
 
 .hero-label,
@@ -83,7 +88,7 @@ input {
 }
 
 .hero {
-  padding: 56px 0 46px;
+  padding: 52px 0 40px;
 }
 
 .hero-label,
@@ -101,18 +106,15 @@ input {
 .book-title,
 .guide h2 {
   margin: 0;
-  font-family:
-    "Songti SC",
-    "STSong",
-    "Noto Serif CJK SC",
-    serif;
-  font-weight: 700;
-  line-height: 1.08;
+  font-weight: 800;
+  line-height: 1.12;
 }
 
 .hero h1 {
-  font-size: clamp(3rem, 8vw, 5.5rem);
-  letter-spacing: -0.05em;
+  max-width: 12em;
+  font-size: 4.8rem;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
 }
 
 .hero-copy {
@@ -120,6 +122,7 @@ input {
   margin: 20px 0 0;
   color: var(--muted);
   font-size: 1.06rem;
+  overflow-wrap: anywhere;
 }
 
 .hero-meta {
@@ -139,7 +142,8 @@ input {
 .sidebar-panel {
   border: 1px solid var(--line);
   background: var(--panel);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
 }
 
 .hero-meta span {
@@ -148,6 +152,8 @@ input {
   min-height: 38px;
   padding: 0 14px;
   border-radius: 999px;
+  color: var(--muted);
+  box-shadow: var(--shadow-soft);
 }
 
 .workspace {
@@ -155,6 +161,15 @@ input {
   grid-template-columns: 300px minmax(0, 1fr);
   gap: 24px;
   align-items: start;
+}
+
+.workspace,
+.sidebar,
+.sidebar-panel,
+.catalog-area,
+.book-section,
+.chapter-card {
+  min-width: 0;
 }
 
 .sidebar {
@@ -167,7 +182,7 @@ input {
 .sidebar-panel {
   padding: 20px;
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-soft);
 }
 
 .search-panel {
@@ -178,15 +193,15 @@ input {
   width: 100%;
   min-height: 48px;
   margin-top: 12px;
-  padding: 0 14px;
-  border-radius: 14px;
+  padding: 0 16px;
+  border-radius: 16px;
   color: var(--ink);
   outline: 0;
 }
 
 .search-input:focus {
-  border-color: rgba(41, 73, 76, 0.36);
-  box-shadow: 0 0 0 4px rgba(41, 73, 76, 0.08);
+  border-color: rgba(0, 122, 255, 0.38);
+  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.12);
 }
 
 .jump-list {
@@ -202,20 +217,27 @@ input {
   gap: 14px;
   min-height: 48px;
   padding: 0 14px;
-  border-radius: 14px;
+  border-radius: 16px;
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
 }
 
 .jump-link:hover,
 .jump-link:focus-visible {
   transform: translateY(-2px);
-  border-color: rgba(41, 73, 76, 0.24);
-  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(0, 122, 255, 0.22);
+  background: rgba(255, 255, 255, 0.94);
 }
 
 .jump-link span:last-child {
   color: var(--muted);
   font-size: 0.88rem;
+}
+
+.jump-link span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .catalog-area {
@@ -231,7 +253,7 @@ input {
 
 .filter-chip {
   min-height: 40px;
-  padding: 0 14px;
+  padding: 0 16px;
   border-radius: 999px;
   color: var(--muted);
   cursor: pointer;
@@ -244,9 +266,9 @@ input {
 }
 
 .filter-chip.is-active {
-  border-color: rgba(41, 73, 76, 0.24);
-  background: rgba(41, 73, 76, 0.12);
-  color: var(--ink);
+  border-color: rgba(0, 122, 255, 0.28);
+  background: rgba(0, 122, 255, 0.12);
+  color: var(--accent);
 }
 
 .catalog-grid {
@@ -267,7 +289,9 @@ input {
   padding: 24px;
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
-  background: rgba(255, 253, 249, 0.8);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
   box-shadow: var(--shadow);
 }
 
@@ -281,7 +305,7 @@ input {
 
 .book-title {
   margin-top: 6px;
-  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-size: 2.25rem;
 }
 
 .book-stat {
@@ -302,22 +326,24 @@ input {
 
 .chapter-card {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   padding: 18px;
   border-radius: var(--radius-md);
   transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset;
 }
 
 .chapter-card:hover {
   transform: translateY(-4px);
   border-color: var(--line-strong);
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.96);
 }
 
 .chapter-card h3 {
   margin: 0;
   font-size: 1.18rem;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .chapter-meta {
@@ -332,6 +358,8 @@ input {
 
 .chapter-actions {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .chapter-link {
@@ -340,23 +368,30 @@ input {
   min-height: 34px;
   padding: 0 12px;
   border-radius: 999px;
-  border: 1px solid rgba(41, 73, 76, 0.16);
-  background: rgba(41, 73, 76, 0.1);
+  border: 1px solid rgba(0, 122, 255, 0.22);
+  background: rgba(0, 122, 255, 0.12);
   color: var(--accent);
   font-weight: 600;
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
 }
 
+.chapter-download {
+  border-color: rgba(52, 199, 89, 0.24);
+  background: rgba(52, 199, 89, 0.12);
+  color: #15803d;
+}
+
 .chapter-link:hover,
 .chapter-link:focus-visible {
   transform: translateY(-1px);
-  border-color: rgba(41, 73, 76, 0.28);
-  background: rgba(41, 73, 76, 0.14);
+  border-color: rgba(0, 122, 255, 0.36);
+  background: rgba(0, 122, 255, 0.18);
 }
 
 .chapter-placeholder {
   color: var(--muted);
   font-size: 0.92rem;
+  overflow-wrap: anywhere;
 }
 
 .chapter-empty {
@@ -385,7 +420,7 @@ input {
 
 .guide-card h2 {
   margin-top: 6px;
-  font-size: clamp(1.7rem, 4vw, 2.4rem);
+  font-size: 2.15rem;
 }
 
 .guide-card p {
@@ -394,8 +429,8 @@ input {
 
 .guide-card-accent {
   background:
-    linear-gradient(180deg, rgba(41, 73, 76, 0.92) 0%, rgba(30, 55, 57, 0.92) 100%);
-  color: #f6f8f5;
+    linear-gradient(180deg, rgba(17, 24, 39, 0.94) 0%, rgba(30, 41, 59, 0.94) 100%);
+  color: #f8fafc;
 }
 
 .guide-card-accent .guide-label {
@@ -450,11 +485,25 @@ input {
 
 @media (max-width: 720px) {
   .page-shell {
-    width: min(100% - 20px, 1180px);
+    width: min(100% - 32px, 1180px);
   }
 
   .hero {
     padding-top: 36px;
+  }
+
+  .hero h1 {
+    max-width: 100%;
+    font-size: 2.18rem;
+  }
+
+  .hero-copy {
+    font-size: 0.98rem;
+  }
+
+  .book-title,
+  .guide-card h2 {
+    font-size: 1.8rem;
   }
 
   .book-section,
@@ -466,5 +515,14 @@ input {
   .book-head {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .chapter-meta {
+    display: grid;
+    justify-content: stretch;
+  }
+
+  .chapter-empty {
+    justify-self: start;
   }
 }

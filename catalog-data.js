@@ -32,6 +32,7 @@ window.catalogData = [
         demo: {
           label: "球壳与球外点电荷",
           href: "sphere-shell-demo.html",
+          download: "downloads/sphere-shell-demo.zip",
           summary: "三维电场线、等势面与接地球壳镜像电荷演示",
         },
       },

@@ -863,7 +863,7 @@ function createRenderer() {
   renderer.setPixelRatio(Math.min((window.devicePixelRatio || 1) * 1.25, 3));
   renderer.setSize(sceneHost.clientWidth, sceneHost.clientHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.setClearColor(0xf8f4ee, 1);
+  renderer.setClearColor(0xf7f8fb, 1);
   sceneHost.innerHTML = "";
   sceneHost.appendChild(renderer.domElement);
   return renderer;
@@ -871,7 +871,7 @@ function createRenderer() {
 
 function initThree() {
   state.scene = new THREE.Scene();
-  state.scene.background = new THREE.Color(0xf8f4ee);
+  state.scene.background = new THREE.Color(0xf7f8fb);
 
   state.camera = new THREE.PerspectiveCamera(
     34,

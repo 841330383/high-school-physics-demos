@@ -31,6 +31,11 @@ function createChapterCard(chapter, index) {
     ? `
       <div class="chapter-actions">
         <a class="chapter-link" href="${demo.href}">${demo.label}</a>
+        ${
+          demo.download
+            ? `<a class="chapter-link chapter-download" href="${demo.download}" download>下载</a>`
+            : ""
+        }
       </div>
       <span class="chapter-placeholder">${demo.summary || "已添加演示"}</span>
     `
