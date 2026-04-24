@@ -174,9 +174,24 @@ input {
 
 .sidebar {
   position: sticky;
-  top: 108px;
+  top: 24px;
+  z-index: 20;
   display: grid;
   gap: 16px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+  scrollbar-width: thin;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.18);
 }
 
 .sidebar-panel {
@@ -243,6 +258,7 @@ input {
 .catalog-area {
   display: grid;
   gap: 18px;
+  grid-column: 2;
 }
 
 .filter-bar {
@@ -478,8 +494,16 @@ input {
     grid-template-columns: 1fr;
   }
 
+  .catalog-area {
+    grid-column: auto;
+  }
+
   .sidebar {
     position: static;
+    width: auto;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
   }
 }
 
