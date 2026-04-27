@@ -255,7 +255,7 @@ button {
 
 .stage-summary {
   display: grid;
-  grid-template-columns: 1.15fr 1fr 1fr;
+  grid-template-columns: 1.1fr 1fr 1fr 1fr;
   gap: 12px;
   padding: 16px 22px 22px;
 }
@@ -328,7 +328,7 @@ button {
   background: rgba(0, 122, 255, 0.08);
 }
 
-.formula-card span {
+.formula-line {
   display: flex;
   align-items: center;
   min-height: 48px;
@@ -347,9 +347,30 @@ button {
   white-space: nowrap;
 }
 
-.formula-card sub {
+.formula-line sub {
   margin: 0 0.05em;
   font-size: 0.68em;
+}
+
+.sqrt-formula {
+  display: inline-flex;
+  align-items: flex-start;
+  margin-left: 0.08em;
+  line-height: 1;
+}
+
+.sqrt-symbol {
+  font-size: 1.22em;
+  line-height: 1.05;
+  transform: translateY(0.04em);
+}
+
+.sqrt-body {
+  display: inline-block;
+  margin-left: -0.08em;
+  padding: 0.14em 0.08em 0;
+  border-top: 0.1em solid currentColor;
+  line-height: 1.05;
 }
 
 .button-row,
@@ -603,7 +624,7 @@ button {
     padding-right: 16px;
   }
 
-  .formula-card span {
+  .formula-line {
     font-size: 1.18rem;
   }
 }

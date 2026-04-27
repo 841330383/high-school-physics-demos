@@ -63,6 +63,10 @@
               <span>电流方向</span>
               <strong id="currentText">暂时为零</strong>
             </article>
+            <article class="summary-card">
+              <span>试探电荷</span>
+              <strong id="particleText">受力方向随电场改变</strong>
+            </article>
           </div>
         </section>
 
@@ -72,16 +76,22 @@
             <h2 class="side-title">理想 LC 自由振荡</h2>
             <p>
               电容器储存电场能，线圈储存磁场能。理想模型中没有电阻损耗，
-              总能量保持不变，电荷和电流相位相差四分之一个周期。
+              总能量保持不变，电荷和电流相位相差四分之一个周期。电容中间的正试探电荷只用来显示电场力方向，不参与回路振荡。
             </p>
           </section>
 
           <section class="formula-block">
             <p class="section-kicker">模型公式</p>
             <div class="formula-card">
-              <span>q = Q<sub>m</sub> · cos(ωt)</span>
-              <span>i = -ωQ<sub>m</sub> · sin(ωt)</span>
-              <span>T = 2π√(LC)</span>
+              <div class="formula-line">q = Q<sub>m</sub> · cos(ωt)</div>
+              <div class="formula-line">i = -ωQ<sub>m</sub> · sin(ωt)</div>
+              <div class="formula-line">
+                T = 2π
+                <span class="sqrt-formula" aria-label="根号 LC">
+                  <span class="sqrt-symbol">√</span>
+                  <span class="sqrt-body">LC</span>
+                </span>
+              </div>
             </div>
           </section>
 

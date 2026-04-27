@@ -28,6 +28,7 @@ const nodes = {
   phaseText: document.querySelector("#phaseText"),
   chargeText: document.querySelector("#chargeText"),
   currentText: document.querySelector("#currentText"),
+  particleText: document.querySelector("#particleText"),
   speedButtons: document.querySelectorAll(".speed-chip"),
   momentButtons: document.querySelectorAll(".moment-card"),
 };
@@ -119,28 +120,38 @@ function strokeLine(ctx, x1, y1, x2, y2, color, width = 7) {
 }
 
 function drawCharges(ctx, cx, plateY, plateWidth, q, positivePlate) {
-  const count = Math.max(5, Math.min(9, Math.round(plateWidth / 16)));
+  const count = Math.max(7, Math.min(11, Math.round(plateWidth / 14)));
+  const activeCount = Math.round(Math.abs(q) * count);
   const magnitude = Math.abs(q);
   const sign = positivePlate ? "+" : "-";
   const color = positivePlate ? "#ff3b30" : "#007aff";
 
   ctx.save();
-  ctx.globalAlpha = 0.22 + magnitude * 0.78;
-  ctx.fillStyle = color;
   ctx.font = "700 18px SF Pro Display, Microsoft YaHei, sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
   for (let index = 0; index < count; index += 1) {
     const x = cx - plateWidth * 0.42 + (plateWidth * 0.84 * index) / (count - 1);
+    const centerOffset = Math.abs(index - (count - 1) / 2);
+    const activeLimit = activeCount / 2;
+    const isActive = centerOffset < activeLimit;
+    ctx.globalAlpha = isActive ? 0.9 : 0.14;
+    ctx.fillStyle = isActive ? color : "#94a3b8";
     ctx.beginPath();
-    ctx.arc(x, plateY, 13, 0, TAU);
+    ctx.arc(x, plateY, isActive ? 13 : 8, 0, TAU);
     ctx.fill();
-    ctx.fillStyle = "#fff";
-    ctx.fillText(sign, x, plateY + 1);
-    ctx.fillStyle = color;
+
+    if (isActive) {
+      ctx.fillStyle = "#fff";
+      ctx.fillText(sign, x, plateY + 1);
+    }
   }
 
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = color;
+  ctx.font = "800 13px SF Pro Display, Microsoft YaHei, sans-serif";
+  ctx.fillText(`${Math.round(magnitude * 100)}%`, cx + plateWidth * 0.62, plateY + 5);
   ctx.restore();
 }
 
@@ -168,6 +179,129 @@ function drawElectricField(ctx, cx, y1, y2, plateWidth, q) {
     ctx.stroke();
     drawArrow(ctx, x, (startY + endY) / 2, angle, 9, "#ff9500", 0.34 + magnitude * 0.6);
   });
+
+  ctx.restore();
+}
+
+function drawTestCharge(ctx, cx, topY, bottomY, plateWidth, q, showLabel = true) {
+  const gap = bottomY - topY;
+  const midY = (topY + bottomY) / 2;
+  const particleY = midY + q * gap * 0.22;
+  const fieldDown = q > 0;
+  const magnitude = Math.abs(q);
+  const forceLength = 14 + magnitude * 24;
+  const forceAngle = fieldDown ? Math.PI / 2 : -Math.PI / 2;
+  const alpha = 0.24 + magnitude * 0.68;
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(17, 24, 39, 0.12)";
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 8]);
+  ctx.beginPath();
+  ctx.moveTo(cx, topY + 8);
+  ctx.lineTo(cx, bottomY - 8);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  for (let offset = 1; offset <= 3; offset += 1) {
+    const ghostTheta = state.theta - offset * 0.38;
+    const ghostY = midY + Math.cos(ghostTheta) * gap * 0.28;
+    ctx.globalAlpha = 0.16 / offset;
+    ctx.fillStyle = "#ff9500";
+    ctx.beginPath();
+    ctx.arc(cx, ghostY, 13 - offset * 1.5, 0, TAU);
+    ctx.fill();
+  }
+
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "#fff7ed";
+  ctx.strokeStyle = "#ff9500";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(cx, particleY, 15, 0, TAU);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#ff9500";
+  ctx.font = "800 18px SF Pro Display, Microsoft YaHei, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("+", cx, particleY + 1);
+
+  if (magnitude > 0.04) {
+    ctx.strokeStyle = `rgba(255, 149, 0, ${alpha})`;
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(cx + plateWidth * 0.32, particleY);
+    ctx.lineTo(
+      cx + plateWidth * 0.32,
+      particleY + (fieldDown ? forceLength : -forceLength)
+    );
+    ctx.stroke();
+    drawArrow(
+      ctx,
+      cx + plateWidth * 0.32,
+      particleY + (fieldDown ? forceLength : -forceLength),
+      forceAngle,
+      10,
+      "#ff9500",
+      alpha
+    );
+  }
+
+  if (showLabel) {
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "#92400e";
+    ctx.font = "800 13px SF Pro Display, Microsoft YaHei, sans-serif";
+    ctx.fillText("正试探电荷", cx + plateWidth * 0.42, particleY + 4);
+  }
+  ctx.restore();
+}
+
+function drawCurrentPackets(ctx, points, clockwise, current) {
+  const magnitude = Math.abs(current);
+  if (magnitude < 0.06) {
+    return;
+  }
+
+  const route = clockwise ? points : [...points].reverse();
+  const segments = [];
+  let total = 0;
+
+  for (let index = 0; index < route.length - 1; index += 1) {
+    const start = route[index];
+    const end = route[index + 1];
+    const length = Math.hypot(end.x - start.x, end.y - start.y);
+    segments.push({ start, end, length });
+    total += length;
+  }
+
+  ctx.save();
+  ctx.fillStyle = "#007aff";
+  ctx.globalAlpha = 0.24 + magnitude * 0.62;
+
+  for (let index = 0; index < 10; index += 1) {
+    let distance = (((state.theta / TAU) * total * 2.2 + (index / 10) * total) % total + total) % total;
+    let segment = segments[0];
+
+    for (const item of segments) {
+      if (distance <= item.length) {
+        segment = item;
+        break;
+      }
+      distance -= item.length;
+    }
+
+    const ratio = segment.length ? distance / segment.length : 0;
+    const x = segment.start.x + (segment.end.x - segment.start.x) * ratio;
+    const y = segment.start.y + (segment.end.y - segment.start.y) * ratio;
+    const pulse = 0.75 + 0.25 * Math.sin(state.theta * 3 + index);
+
+    ctx.beginPath();
+    ctx.arc(x, y, (4.5 + magnitude * 4) * pulse, 0, TAU);
+    ctx.fill();
+  }
 
   ctx.restore();
 }
@@ -274,10 +408,22 @@ function drawCircuit() {
   ctx.stroke();
   ctx.restore();
 
-  drawElectricField(ctx, leftX, capTopY, capBottomY, plateWidth, data.q);
   drawCharges(ctx, leftX, capTopY - 24, plateWidth, data.q, data.q >= 0);
   drawCharges(ctx, leftX, capBottomY + 24, plateWidth, data.q, data.q < 0);
+  drawElectricField(ctx, leftX, capTopY, capBottomY, plateWidth, data.q);
+  drawTestCharge(ctx, leftX, capTopY, capBottomY, plateWidth, data.q, !compact);
   drawCoil(ctx, rightX, coilTopY, coilBottomY, data.current, coilScale);
+  drawCurrentPackets(
+    ctx,
+    [
+      { x: leftX, y: topY },
+      { x: rightX, y: topY },
+      { x: rightX, y: bottomY },
+      { x: leftX, y: bottomY },
+    ],
+    clockwise,
+    data.current
+  );
 
   const arrowSize = 15 + currentMagnitude * 6;
   if (currentMagnitude > 0.035) {
@@ -397,9 +543,9 @@ function updateReadouts() {
   if (chargeSmall) {
     nodes.chargeText.textContent = "电容器恰好放完电";
   } else if (data.q > 0) {
-    nodes.chargeText.textContent = "上极板为正，下极板为负";
+    nodes.chargeText.textContent = "上正下负，电荷数量随 |q| 变化";
   } else {
-    nodes.chargeText.textContent = "上极板为负，下极板为正";
+    nodes.chargeText.textContent = "上负下正，电荷数量随 |q| 变化";
   }
 
   if (currentSmall) {
@@ -408,6 +554,14 @@ function updateReadouts() {
     nodes.currentText.textContent = "顺时针，正在向线圈转移能量";
   } else {
     nodes.currentText.textContent = "逆时针，电容反向充放电";
+  }
+
+  if (chargeSmall) {
+    nodes.particleText.textContent = "电场近零，粒子回到中线附近";
+  } else if (data.q > 0) {
+    nodes.particleText.textContent = "正试探电荷向下偏转";
+  } else {
+    nodes.particleText.textContent = "正试探电荷向上偏转";
   }
 
   nodes.electricBar.style.width = `${electricPercent}%`;
