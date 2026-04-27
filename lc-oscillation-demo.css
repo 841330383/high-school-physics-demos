@@ -356,8 +356,27 @@ button {
 }
 
 .formula-line sub {
-  margin: 0 0.05em;
-  font-size: 0.68em;
+  position: relative;
+  bottom: -0.32em;
+  margin: 0 0.06em;
+  font-size: 0.62em;
+  line-height: 0;
+  vertical-align: baseline;
+}
+
+.formula-note sub {
+  position: relative;
+  bottom: -0.22em;
+  font-size: 0.72em;
+  line-height: 0;
+  vertical-align: baseline;
+}
+
+.formula-note {
+  margin: 0 4px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
 }
 
 .sqrt-formula {

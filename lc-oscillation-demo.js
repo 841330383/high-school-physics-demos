@@ -79,7 +79,7 @@ function getCanvasContext(canvas) {
 function model(theta) {
   const t = normalizeTheta(theta);
   const q = Math.cos(t);
-  const current = -Math.sin(t);
+  const current = Math.sin(t);
   const electricEnergy = q * q;
   const magneticEnergy = current * current;
 
@@ -769,7 +769,7 @@ function updateThreeScene() {
     new THREE.Vector3(2.1, -1.25, 0),
     new THREE.Vector3(-2.38, -1.25, 0),
   ];
-  const path = data.current < 0 ? basePath : [...basePath].reverse();
+  const path = data.current > 0 ? basePath : [...basePath].reverse();
   threeState.currentDots.forEach((dot, index) => {
     dot.visible = iAbs > 0.05;
     dot.position.copy(getPathPoint(path, state.theta / TAU + index / threeState.currentDots.length));
@@ -840,7 +840,7 @@ function drawGraph() {
   }
 
   curve("#007aff", (t) => Math.cos(t));
-  curve("#34c759", (t) => -Math.sin(t));
+  curve("#34c759", (t) => Math.sin(t));
 
   const markerX = left + (theta / TAU) * plotWidth;
   ctx.strokeStyle = "rgba(255, 149, 0, 0.86)";
@@ -858,7 +858,7 @@ function drawGraph() {
   ctx.fill();
   ctx.fillStyle = "#34c759";
   ctx.beginPath();
-  ctx.arc(markerX, mid - -Math.sin(theta) * amp, 5, 0, TAU);
+  ctx.arc(markerX, mid - Math.sin(theta) * amp, 5, 0, TAU);
   ctx.fill();
 
   ctx.font = "800 14px SF Pro Display, Microsoft YaHei, sans-serif";
@@ -892,7 +892,7 @@ function updateReadouts() {
 
   if (currentSmall) {
     nodes.currentText.textContent = "瞬时电流为零";
-  } else if (data.current < 0) {
+  } else if (data.current > 0) {
     nodes.currentText.textContent = "顺时针，正在向线圈转移能量";
   } else {
     nodes.currentText.textContent = "逆时针，电容反向充放电";
