@@ -10,7 +10,7 @@ const state = {
 };
 
 const nodes = {
-  circuitCanvas: document.querySelector("#circuitCanvas"),
+  sceneHost: document.querySelector("#lcScene3d"),
   graphCanvas: document.querySelector("#graphCanvas"),
   playButton: document.querySelector("#playButton"),
   resetButton: document.querySelector("#resetButton"),
@@ -31,6 +31,27 @@ const nodes = {
   particleText: document.querySelector("#particleText"),
   speedButtons: document.querySelectorAll(".speed-chip"),
   momentButtons: document.querySelectorAll(".moment-card"),
+};
+
+const threeState = {
+  ready: false,
+  scene: null,
+  camera: null,
+  renderer: null,
+  controls: null,
+  world: null,
+  chargeDots: [],
+  currentDots: [],
+  fieldArrows: [],
+  magneticRings: [],
+  testCharge: null,
+  forceArrow: null,
+  forceLabel: null,
+  plateTopMaterial: null,
+  plateBottomMaterial: null,
+  topChargeMaterial: null,
+  bottomChargeMaterial: null,
+  cameraMode: null,
 };
 
 function normalizeTheta(theta) {
@@ -350,99 +371,420 @@ function drawCoil(ctx, x, topY, bottomY, current, scale = 1) {
   ctx.restore();
 }
 
-function drawCircuit() {
-  const { ctx, width, height } = getCanvasContext(nodes.circuitCanvas);
-  const data = model(state.theta);
-  const compact = width < 520;
-  const coilScale = compact ? 0.52 : width < 760 ? 0.82 : 1;
-  const leftX = width * (compact ? 0.3 : 0.24);
-  const rightX = width * (compact ? 0.62 : 0.77);
-  const topY = height * 0.22;
-  const bottomY = height * 0.72;
-  const capTopY = height * 0.41;
-  const capBottomY = height * 0.52;
-  const plateWidth = Math.min(150, width * 0.22);
-  const coilTopY = topY + 42;
-  const coilBottomY = bottomY - 42;
-  const wireColor = "#172a32";
-  const currentColor = "#007aff";
-  const currentMagnitude = Math.abs(data.current);
-  const currentAlpha = Math.max(0.18, currentMagnitude);
-  const clockwise = data.current < 0;
+function makeStandardMaterial(color, options = {}) {
+  return new THREE.MeshStandardMaterial({
+    color,
+    roughness: 0.42,
+    metalness: 0.08,
+    transparent: options.transparent || false,
+    opacity: options.opacity ?? 1,
+    emissive: options.emissive || 0x000000,
+    emissiveIntensity: options.emissiveIntensity || 0,
+  });
+}
 
-  clearCanvas(ctx, width, height);
+function createTextSprite(text, color = "#111827", fontSize = 44) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 160;
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.font = `800 ${fontSize}px SF Pro Display, Microsoft YaHei, sans-serif`;
+  ctx.fillStyle = color;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, canvas.width / 2, canvas.height / 2);
 
-  ctx.save();
-  ctx.strokeStyle = "rgba(0, 122, 255, 0.05)";
-  ctx.lineWidth = 1;
-  for (let y = 50; y < height; y += 42) {
-    ctx.beginPath();
-    ctx.moveTo(36, y);
-    ctx.lineTo(width - 36, y);
-    ctx.stroke();
-  }
-  for (let x = 42; x < width; x += 54) {
-    ctx.beginPath();
-    ctx.moveTo(x, 36);
-    ctx.lineTo(x, height - 36);
-    ctx.stroke();
-  }
-  ctx.restore();
-
-  strokeLine(ctx, leftX, topY, rightX, topY, wireColor);
-  strokeLine(ctx, rightX, topY, rightX, coilTopY, wireColor);
-  strokeLine(ctx, rightX, coilBottomY, rightX, bottomY, wireColor);
-  strokeLine(ctx, rightX, bottomY, leftX, bottomY, wireColor);
-  strokeLine(ctx, leftX, topY, leftX, capTopY - 34, wireColor);
-  strokeLine(ctx, leftX, capBottomY + 34, leftX, bottomY, wireColor);
-
-  ctx.save();
-  ctx.strokeStyle = "#1f2937";
-  ctx.lineWidth = 9;
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(leftX - plateWidth / 2, capTopY);
-  ctx.lineTo(leftX + plateWidth / 2, capTopY);
-  ctx.moveTo(leftX - plateWidth / 2, capBottomY);
-  ctx.lineTo(leftX + plateWidth / 2, capBottomY);
-  ctx.stroke();
-  ctx.restore();
-
-  drawCharges(ctx, leftX, capTopY - 24, plateWidth, data.q, data.q >= 0);
-  drawCharges(ctx, leftX, capBottomY + 24, plateWidth, data.q, data.q < 0);
-  drawElectricField(ctx, leftX, capTopY, capBottomY, plateWidth, data.q);
-  drawTestCharge(ctx, leftX, capTopY, capBottomY, plateWidth, data.q, !compact);
-  drawCoil(ctx, rightX, coilTopY, coilBottomY, data.current, coilScale);
-  drawCurrentPackets(
-    ctx,
-    [
-      { x: leftX, y: topY },
-      { x: rightX, y: topY },
-      { x: rightX, y: bottomY },
-      { x: leftX, y: bottomY },
-    ],
-    clockwise,
-    data.current
+  const texture = new THREE.CanvasTexture(canvas);
+  const sprite = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      depthTest: false,
+    })
   );
+  sprite.scale.set(0.9, 0.28, 1);
+  return sprite;
+}
 
-  const arrowSize = 15 + currentMagnitude * 6;
-  if (currentMagnitude > 0.035) {
-    drawArrow(ctx, (leftX + rightX) / 2, topY, clockwise ? 0 : Math.PI, arrowSize, currentColor, currentAlpha);
-    drawArrow(ctx, rightX, (topY + bottomY) / 2, clockwise ? Math.PI / 2 : -Math.PI / 2, arrowSize, currentColor, currentAlpha);
-    drawArrow(ctx, (leftX + rightX) / 2, bottomY, clockwise ? Math.PI : 0, arrowSize, currentColor, currentAlpha);
-    drawArrow(ctx, leftX, (capBottomY + bottomY) / 2, clockwise ? -Math.PI / 2 : Math.PI / 2, arrowSize, currentColor, currentAlpha);
+function createCylinderBetween(start, end, radius, material) {
+  const direction = new THREE.Vector3().subVectors(end, start);
+  const length = direction.length();
+  const geometry = new THREE.CylinderGeometry(radius, radius, length, 18);
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.copy(start).add(end).multiplyScalar(0.5);
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+  return mesh;
+}
+
+function createArrow3D(color, radius = 0.025, length = 0.56) {
+  const group = new THREE.Group();
+  const shaftMaterial = makeStandardMaterial(color, {
+    transparent: true,
+    opacity: 0.86,
+    emissive: color,
+    emissiveIntensity: 0.12,
+  });
+  const headMaterial = makeStandardMaterial(color, {
+    transparent: true,
+    opacity: 0.92,
+    emissive: color,
+    emissiveIntensity: 0.2,
+  });
+  const shaft = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius, radius, length * 0.7, 14),
+    shaftMaterial
+  );
+  shaft.position.y = length * 0.35;
+  const head = new THREE.Mesh(
+    new THREE.ConeGeometry(radius * 3.4, length * 0.24, 18),
+    headMaterial
+  );
+  head.position.y = length * 0.82;
+  group.add(shaft, head);
+  group.userData.materials = [shaftMaterial, headMaterial];
+  group.userData.baseLength = length;
+  return group;
+}
+
+function setArrow3D(arrow, start, end, opacity = 1) {
+  const direction = new THREE.Vector3().subVectors(end, start);
+  const length = direction.length();
+  if (length < 0.001) {
+    arrow.visible = false;
+    return;
   }
 
-  ctx.save();
-  ctx.fillStyle = "#111827";
-  ctx.font = "800 21px SF Pro Display, Microsoft YaHei, sans-serif";
-  ctx.fillText("C", leftX + plateWidth / 2 + 28, (capTopY + capBottomY) / 2 + 7);
-  ctx.fillText("L", rightX + 60, topY + 16);
-  ctx.fillStyle = "#667085";
-  ctx.font = "700 16px SF Pro Display, Microsoft YaHei, sans-serif";
-  ctx.fillText(`q = ${data.q.toFixed(2)} Qm`, leftX - plateWidth / 2, capBottomY + 78);
-  ctx.fillText(`i = ${data.current.toFixed(2)} Im`, rightX - 54, bottomY + 50);
-  ctx.restore();
+  arrow.visible = true;
+  arrow.position.copy(start);
+  arrow.scale.setScalar(length / arrow.userData.baseLength);
+  arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+  arrow.userData.materials.forEach((material) => {
+    material.opacity = opacity;
+  });
+}
+
+function createCoilMesh() {
+  const points = [];
+  const loops = 7;
+  const topY = 0.96;
+  const bottomY = -0.96;
+
+  for (let step = 0; step <= 260; step += 1) {
+    const p = step / 260;
+    const angle = p * loops * TAU;
+    points.push(
+      new THREE.Vector3(
+        2.1 + Math.sin(angle) * 0.22,
+        topY + (bottomY - topY) * p,
+        Math.cos(angle) * 0.22
+      )
+    );
+  }
+
+  const curve = new THREE.CatmullRomCurve3(points);
+  return new THREE.Mesh(
+    new THREE.TubeGeometry(curve, 260, 0.035, 12, false),
+    makeStandardMaterial(0x1f2937, { emissive: 0x111827, emissiveIntensity: 0.04 })
+  );
+}
+
+function getPathPoint(points, progress) {
+  const segments = [];
+  let total = 0;
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const start = points[index];
+    const end = points[index + 1];
+    const length = start.distanceTo(end);
+    segments.push({ start, end, length });
+    total += length;
+  }
+
+  let distance = (((progress % 1) + 1) % 1) * total;
+  for (const segment of segments) {
+    if (distance <= segment.length) {
+      return segment.start.clone().lerp(segment.end, distance / segment.length);
+    }
+    distance -= segment.length;
+  }
+
+  return points[points.length - 1].clone();
+}
+
+function initThreeScene() {
+  if (threeState.ready || !nodes.sceneHost || !window.THREE) {
+    return;
+  }
+
+  const host = nodes.sceneHost;
+  threeState.scene = new THREE.Scene();
+  threeState.scene.background = new THREE.Color(0xf8fafc);
+  threeState.camera = new THREE.PerspectiveCamera(
+    36,
+    host.clientWidth / host.clientHeight,
+    0.1,
+    100
+  );
+  threeState.camera.position.set(3.9, 2.45, 5.4);
+
+  threeState.renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: false,
+    powerPreference: "high-performance",
+  });
+  threeState.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  threeState.renderer.setSize(host.clientWidth, host.clientHeight);
+  if (THREE.SRGBColorSpace) {
+    threeState.renderer.outputColorSpace = THREE.SRGBColorSpace;
+  }
+  host.innerHTML = "";
+  host.appendChild(threeState.renderer.domElement);
+
+  threeState.controls = new THREE.OrbitControls(threeState.camera, threeState.renderer.domElement);
+  threeState.controls.enableDamping = true;
+  threeState.controls.dampingFactor = 0.08;
+  threeState.controls.enablePan = false;
+  threeState.controls.minDistance = 3.4;
+  threeState.controls.maxDistance = 8.2;
+  threeState.controls.target.set(0, 0, 0);
+
+  const ambient = new THREE.AmbientLight(0xffffff, 0.86);
+  const hemisphere = new THREE.HemisphereLight(0xffffff, 0xdbeafe, 0.8);
+  const key = new THREE.DirectionalLight(0xffffff, 1.4);
+  key.position.set(4, 5, 5);
+  const fill = new THREE.DirectionalLight(0xdff5ff, 0.6);
+  fill.position.set(-5, 3, -4);
+  threeState.scene.add(ambient, hemisphere, key, fill);
+
+  const world = new THREE.Group();
+  threeState.scene.add(world);
+  threeState.world = world;
+
+  const wireMaterial = makeStandardMaterial(0x172a32);
+  const wirePoints = {
+    leftTop: new THREE.Vector3(-2.38, 1.25, 0),
+    leftUpperGap: new THREE.Vector3(-2.38, 0.62, 0),
+    leftLowerGap: new THREE.Vector3(-2.38, -0.62, 0),
+    leftBottom: new THREE.Vector3(-2.38, -1.25, 0),
+    rightTop: new THREE.Vector3(2.1, 1.25, 0),
+    coilTop: new THREE.Vector3(2.1, 0.96, 0),
+    coilBottom: new THREE.Vector3(2.1, -0.96, 0),
+    rightBottom: new THREE.Vector3(2.1, -1.25, 0),
+  };
+  [
+    [wirePoints.leftTop, wirePoints.rightTop],
+    [wirePoints.rightTop, wirePoints.coilTop],
+    [wirePoints.coilBottom, wirePoints.rightBottom],
+    [wirePoints.rightBottom, wirePoints.leftBottom],
+    [wirePoints.leftTop, wirePoints.leftUpperGap],
+    [wirePoints.leftLowerGap, wirePoints.leftBottom],
+  ].forEach(([start, end]) => {
+    world.add(createCylinderBetween(start, end, 0.035, wireMaterial));
+  });
+
+  const grid = new THREE.GridHelper(6, 12, 0xdbe7f1, 0xeaf1f7);
+  grid.position.y = -1.55;
+  grid.material.transparent = true;
+  grid.material.opacity = 0.46;
+  world.add(grid);
+
+  threeState.plateTopMaterial = makeStandardMaterial(0xffd7d7, {
+    emissive: 0xff3b30,
+    emissiveIntensity: 0.08,
+  });
+  threeState.plateBottomMaterial = makeStandardMaterial(0xd7e9ff, {
+    emissive: 0x007aff,
+    emissiveIntensity: 0.08,
+  });
+  const plateGeometry = new THREE.BoxGeometry(1.15, 0.055, 0.88);
+  const topPlate = new THREE.Mesh(plateGeometry, threeState.plateTopMaterial);
+  topPlate.position.set(-2.38, 0.48, 0);
+  const bottomPlate = new THREE.Mesh(plateGeometry, threeState.plateBottomMaterial);
+  bottomPlate.position.set(-2.38, -0.48, 0);
+  world.add(topPlate, bottomPlate);
+
+  threeState.topChargeMaterial = makeStandardMaterial(0xff3b30, {
+    emissive: 0xff3b30,
+    emissiveIntensity: 0.26,
+  });
+  threeState.bottomChargeMaterial = makeStandardMaterial(0x007aff, {
+    emissive: 0x007aff,
+    emissiveIntensity: 0.26,
+  });
+  const chargeGeometry = new THREE.SphereGeometry(0.07, 18, 18);
+  const chargePositions = [];
+  [-0.42, -0.28, -0.14, 0, 0.14, 0.28, 0.42].forEach((x) => {
+    [-0.26, 0, 0.26].forEach((z) => chargePositions.push({ x, z }));
+  });
+  chargePositions.forEach((offset, index) => {
+    const top = new THREE.Mesh(chargeGeometry, threeState.topChargeMaterial);
+    top.position.set(-2.38 + offset.x, 0.59, offset.z);
+    const bottom = new THREE.Mesh(chargeGeometry, threeState.bottomChargeMaterial);
+    bottom.position.set(-2.38 + offset.x, -0.59, offset.z);
+    threeState.chargeDots.push({ mesh: top, plate: "top", index });
+    threeState.chargeDots.push({ mesh: bottom, plate: "bottom", index });
+    world.add(top, bottom);
+  });
+
+  [-0.28, 0, 0.28].forEach((x) => {
+    const arrow = createArrow3D(0xff9500, 0.018, 0.62);
+    arrow.position.set(-2.38 + x, 0.26, 0);
+    threeState.fieldArrows.push({ arrow, x });
+    world.add(arrow);
+  });
+
+  const particleMaterial = makeStandardMaterial(0xff9500, {
+    emissive: 0xff9500,
+    emissiveIntensity: 0.32,
+  });
+  threeState.testCharge = new THREE.Mesh(new THREE.SphereGeometry(0.12, 28, 28), particleMaterial);
+  threeState.testCharge.position.set(-2.38, 0, 0.06);
+  world.add(threeState.testCharge);
+  const particleLabel = createTextSprite("+ 试探电荷", "#92400e", 36);
+  particleLabel.position.set(-1.58, 0.12, 0.46);
+  particleLabel.scale.set(1.18, 0.34, 1);
+  threeState.forceLabel = particleLabel;
+  world.add(particleLabel);
+  threeState.forceArrow = createArrow3D(0xff9500, 0.02, 0.5);
+  world.add(threeState.forceArrow);
+
+  world.add(createCoilMesh());
+  [0.72, 0.24, -0.24, -0.72].forEach((y) => {
+    const material = new THREE.MeshBasicMaterial({
+      color: 0x34c759,
+      transparent: true,
+      opacity: 0.2,
+      depthWrite: false,
+    });
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.009, 8, 96), material);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.set(2.1, y, 0);
+    threeState.magneticRings.push(ring);
+    world.add(ring);
+  });
+
+  const currentMaterial = makeStandardMaterial(0x007aff, {
+    transparent: true,
+    opacity: 0.78,
+    emissive: 0x007aff,
+    emissiveIntensity: 0.36,
+  });
+  for (let index = 0; index < 14; index += 1) {
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.045, 16, 16), currentMaterial);
+    threeState.currentDots.push(dot);
+    world.add(dot);
+  }
+
+  const cLabel = createTextSprite("C", "#111827", 48);
+  cLabel.position.set(-1.42, 0, 0.22);
+  const lLabel = createTextSprite("L", "#111827", 48);
+  lLabel.position.set(2.72, 1.18, 0.18);
+  world.add(cLabel, lLabel);
+
+  threeState.ready = true;
+}
+
+function resizeThreeScene() {
+  if (!threeState.ready || !nodes.sceneHost) {
+    return;
+  }
+
+  const width = nodes.sceneHost.clientWidth;
+  const height = nodes.sceneHost.clientHeight;
+  if (width <= 0 || height <= 0) {
+    return;
+  }
+
+  const cameraMode = width < 520 ? "narrow" : "wide";
+  if (threeState.cameraMode !== cameraMode) {
+    if (cameraMode === "narrow") {
+      threeState.camera.position.set(5.7, 3.1, 8.5);
+    } else {
+      threeState.camera.position.set(3.9, 2.45, 5.4);
+    }
+    threeState.controls.target.set(0, 0, 0);
+    threeState.cameraMode = cameraMode;
+  }
+
+  threeState.camera.aspect = width / height;
+  threeState.camera.fov = cameraMode === "narrow" ? 44 : 36;
+  threeState.camera.updateProjectionMatrix();
+  threeState.renderer.setSize(width, height, false);
+}
+
+function updateThreeScene() {
+  initThreeScene();
+  if (!threeState.ready) {
+    return;
+  }
+
+  resizeThreeScene();
+  const data = model(state.theta);
+  const qAbs = Math.abs(data.q);
+  const iAbs = Math.abs(data.current);
+  const sceneAspect = nodes.sceneHost.clientWidth / nodes.sceneHost.clientHeight;
+  const sceneScale = sceneAspect < 0.86 ? 0.6 : sceneAspect < 1.08 ? 0.88 : 1;
+  const topPositive = data.q >= 0;
+  const topColor = topPositive ? 0xff3b30 : 0x007aff;
+  const bottomColor = topPositive ? 0x007aff : 0xff3b30;
+  const activeCharges = Math.round(qAbs * 21);
+
+  threeState.plateTopMaterial.color.setHex(topPositive ? 0xffd7d7 : 0xd7e9ff);
+  threeState.plateBottomMaterial.color.setHex(topPositive ? 0xd7e9ff : 0xffd7d7);
+  threeState.topChargeMaterial.color.setHex(topColor);
+  threeState.topChargeMaterial.emissive.setHex(topColor);
+  threeState.bottomChargeMaterial.color.setHex(bottomColor);
+  threeState.bottomChargeMaterial.emissive.setHex(bottomColor);
+
+  threeState.chargeDots.forEach(({ mesh, index }) => {
+    mesh.visible = index < activeCharges;
+    const pulse = 0.85 + 0.15 * Math.sin(state.theta * 3 + index);
+    mesh.scale.setScalar(pulse);
+  });
+
+  const fieldDirection = data.q >= 0 ? -1 : 1;
+  threeState.fieldArrows.forEach(({ arrow, x }) => {
+    const start = new THREE.Vector3(-2.38 + x, fieldDirection > 0 ? -0.22 : 0.22, 0);
+    const end = new THREE.Vector3(-2.38 + x, fieldDirection > 0 ? 0.22 : -0.22, 0);
+    setArrow3D(arrow, start, end, qAbs > 0.04 ? 0.22 + qAbs * 0.62 : 0);
+    arrow.visible = qAbs > 0.04;
+  });
+
+  threeState.testCharge.position.y = data.q * 0.26;
+  threeState.forceLabel.position.y = threeState.testCharge.position.y + 0.08;
+  const forceStart = threeState.testCharge.position.clone().add(new THREE.Vector3(0.23, 0, 0));
+  const forceEnd = forceStart.clone().add(new THREE.Vector3(0, fieldDirection * qAbs * 0.54, 0));
+  setArrow3D(threeState.forceArrow, forceStart, forceEnd, qAbs > 0.04 ? 0.78 : 0);
+  threeState.forceArrow.visible = qAbs > 0.04;
+
+  threeState.magneticRings.forEach((ring, index) => {
+    ring.material.opacity = 0.08 + iAbs * 0.34;
+    const pulse = 1 + iAbs * 0.08 * Math.sin(state.theta * 4 + index);
+    ring.scale.set(pulse, pulse, pulse);
+  });
+
+  const basePath = [
+    new THREE.Vector3(-2.38, 1.25, 0),
+    new THREE.Vector3(2.1, 1.25, 0),
+    new THREE.Vector3(2.1, -1.25, 0),
+    new THREE.Vector3(-2.38, -1.25, 0),
+  ];
+  const path = data.current < 0 ? basePath : [...basePath].reverse();
+  threeState.currentDots.forEach((dot, index) => {
+    dot.visible = iAbs > 0.05;
+    dot.position.copy(getPathPoint(path, state.theta / TAU + index / threeState.currentDots.length));
+    dot.scale.setScalar(0.6 + iAbs * 1.35);
+  });
+
+  threeState.world.scale.setScalar(sceneScale);
+  threeState.world.position.x = sceneAspect < 0.86 ? -0.1 : 0;
+  threeState.world.rotation.y = Math.sin(state.theta * 0.35) * 0.04;
+  threeState.controls.update();
+  threeState.renderer.render(threeState.scene, threeState.camera);
+}
+
+function drawCircuit() {
+  updateThreeScene();
 }
 
 function drawGraph() {

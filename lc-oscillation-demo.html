@@ -43,11 +43,7 @@
             </div>
           </div>
           <div class="canvas-wrap">
-            <canvas
-              id="circuitCanvas"
-              class="circuit-canvas"
-              aria-label="LC 振荡电路动画"
-            ></canvas>
+            <div id="lcScene3d" class="lc-scene3d" aria-label="LC 振荡电路三维动画"></div>
           </div>
           <div class="stage-summary" aria-live="polite">
             <article class="summary-card summary-card-primary">
@@ -198,6 +194,8 @@
       </main>
     </div>
 
-    <script src="lc-oscillation-demo.js?v=20260427-1"></script>
+    <script src="vendor/three.min.js"></script>
+    <script src="vendor/OrbitControls.global.js"></script>
+    <script src="lc-oscillation-demo.js?v=20260427-2"></script>
   </body>
 </html>

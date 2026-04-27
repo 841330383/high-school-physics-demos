@@ -235,7 +235,7 @@ button {
   padding: 18px 22px 0;
 }
 
-.circuit-canvas,
+.lc-scene3d,
 .graph-canvas {
   display: block;
   width: 100%;
@@ -249,8 +249,16 @@ button {
     inset 0 18px 44px rgba(255, 255, 255, 0.28);
 }
 
-.circuit-canvas {
+.lc-scene3d {
   height: clamp(430px, 50vw, 620px);
+  overflow: hidden;
+  position: relative;
+}
+
+.lc-scene3d canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .stage-summary {
@@ -598,7 +606,7 @@ button {
     overflow-wrap: anywhere;
   }
 
-  .circuit-canvas {
+  .lc-scene3d {
     height: 420px;
   }
 
