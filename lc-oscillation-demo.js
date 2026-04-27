@@ -891,11 +891,15 @@ function updateReadouts() {
   }
 
   if (currentSmall) {
-    nodes.currentText.textContent = "瞬时电流为零";
+    nodes.currentText.textContent = "电流为零，自感电动势较大";
   } else if (data.current > 0) {
-    nodes.currentText.textContent = "顺时针，正在向线圈转移能量";
+    nodes.currentText.textContent = chargeSmall
+      ? "电流最大，自感电动势最小"
+      : "顺时针，正在向线圈转移能量";
   } else {
-    nodes.currentText.textContent = "逆时针，电容反向充放电";
+    nodes.currentText.textContent = chargeSmall
+      ? "反向电流最大，自感电动势最小"
+      : "逆时针，电容反向充放电";
   }
 
   if (chargeSmall) {

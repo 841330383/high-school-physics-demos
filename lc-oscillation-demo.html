@@ -56,7 +56,7 @@
               <strong id="chargeText">上极板为正，下极板为负</strong>
             </article>
             <article class="summary-card">
-              <span>电流方向</span>
+              <span>电流与自感电动势</span>
               <strong id="currentText">暂时为零</strong>
             </article>
             <article class="summary-card">
@@ -166,7 +166,7 @@
               <button class="moment-card" data-theta="1.5707963268" type="button">
                 <span>T/4</span>
                 <strong>电流最大</strong>
-                <em>q = 0，磁场能最大</em>
+                <em>q = 0，电场力为零，自感电动势最小</em>
               </button>
               <button class="moment-card" data-theta="3.1415926536" type="button">
                 <span>T/2</span>
@@ -176,7 +176,7 @@
               <button class="moment-card" data-theta="4.7123889804" type="button">
                 <span>3T/4</span>
                 <strong>反向电流最大</strong>
-                <em>q = 0，磁场能最大</em>
+                <em>q = 0，电场力为零，自感电动势最小</em>
               </button>
             </div>
           </article>
@@ -187,8 +187,10 @@
               <h2 class="panel-title">不要把“满电”和“电流最大”混在一起</h2>
             </div>
             <p>
-              电容器两极板电荷最多时，电压最大，但电流瞬时为零；电流最大时，
-              电容器恰好放完电，电场能为零、磁场能最大。课堂演示时可以停在四个关键时刻逐一对照。
+              判断悬浮灰尘时，先看电容器中的电场力。灰尘只受重力，说明极板间电场为零，
+              即 q = 0；此时回路电流最大，但电流正在由增大转为减小，变化率为零。
+              因为 E<sub>自</sub> = L·|Δi / Δt|，自感电动势看电流变化快慢，不看 i 本身，
+              所以线圈中的自感电动势最小。
             </p>
           </article>
         </section>
