@@ -59,7 +59,15 @@ window.catalogData = [
       "安培力与洛伦兹力",
       "电磁感应",
       "交变电流",
-      "电磁振荡与电磁波",
+      {
+        title: "电磁振荡与电磁波",
+        demo: {
+          label: "LC 振荡电路",
+          href: "lc-oscillation-demo.html",
+          download: "downloads/lc-oscillation-demo.zip",
+          summary: "电荷、电流、能量与相位同步演示",
+        },
+      },
       "传感器",
     ],
   },

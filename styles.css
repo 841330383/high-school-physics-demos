@@ -176,9 +176,11 @@ input {
   position: sticky;
   top: 24px;
   z-index: 20;
+  align-self: start;
   display: grid;
   gap: 16px;
-  max-height: calc(100vh - 48px);
+  height: fit-content;
+  max-height: calc(100dvh - 48px);
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 2px;
@@ -487,7 +489,7 @@ input {
   display: none;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 780px) {
   .workspace,
   .guide,
   .chapter-grid {

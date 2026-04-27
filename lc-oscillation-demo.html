@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LC 振荡电路 | 高中物理教学演示</title>
+    <meta
+      name="description"
+      content="理想 LC 振荡电路中电荷、电流、能量与相位关系的课堂演示。"
+    />
+    <link rel="stylesheet" href="lc-oscillation-demo.css?v=20260427-1" />
+  </head>
+  <body>
+    <div class="lc-shell">
+      <header class="demo-top">
+        <div>
+          <p class="demo-subtitle">Electromagnetic Oscillation</p>
+          <h1 class="demo-title">LC 振荡电路</h1>
+          <p class="demo-intro">
+            同步观察电容器带电、回路电流、线圈磁场与能量转化，帮助学生把
+            q-t、i-t 图像和电路过程对应起来。
+          </p>
+        </div>
+        <div class="demo-actions">
+          <a class="demo-back" href="./index.html#catalog">返回目录</a>
+          <a class="demo-download" href="downloads/lc-oscillation-demo.zip" download>
+            下载演示包
+          </a>
+        </div>
+      </header>
+
+      <main class="lc-layout">
+        <section class="glass-panel stage-panel">
+          <div class="panel-head">
+            <div>
+              <p class="section-kicker">过程演示</p>
+              <h2 class="panel-title">电荷、电流与磁场同步变化</h2>
+            </div>
+            <div class="legend" aria-label="图例">
+              <span><i class="dot dot-charge"></i>极板电荷</span>
+              <span><i class="dot dot-current"></i>电流方向</span>
+              <span><i class="dot dot-field"></i>线圈磁场</span>
+            </div>
+          </div>
+          <div class="canvas-wrap">
+            <canvas
+              id="circuitCanvas"
+              class="circuit-canvas"
+              aria-label="LC 振荡电路动画"
+            ></canvas>
+          </div>
+          <div class="stage-summary" aria-live="polite">
+            <article class="summary-card summary-card-primary">
+              <span>当前阶段</span>
+              <strong id="phaseTitle">电容满电</strong>
+              <p id="phaseText">电场能最大，回路电流为零。</p>
+            </article>
+            <article class="summary-card">
+              <span>极板状态</span>
+              <strong id="chargeText">上极板为正，下极板为负</strong>
+            </article>
+            <article class="summary-card">
+              <span>电流方向</span>
+              <strong id="currentText">暂时为零</strong>
+            </article>
+          </div>
+        </section>
+
+        <aside class="glass-panel control-panel">
+          <section class="intro-block">
+            <p class="section-kicker">模型介绍</p>
+            <h2 class="side-title">理想 LC 自由振荡</h2>
+            <p>
+              电容器储存电场能，线圈储存磁场能。理想模型中没有电阻损耗，
+              总能量保持不变，电荷和电流相位相差四分之一个周期。
+            </p>
+          </section>
+
+          <section class="formula-block">
+            <p class="section-kicker">模型公式</p>
+            <div class="formula-card">
+              <span>q = Q<sub>m</sub> · cos(ωt)</span>
+              <span>i = -ωQ<sub>m</sub> · sin(ωt)</span>
+              <span>T = 2π√(LC)</span>
+            </div>
+          </section>
+
+          <section class="control-block">
+            <p class="section-kicker">课堂控制</p>
+            <div class="button-row">
+              <button class="primary-button" id="playButton" type="button">暂停</button>
+              <button class="ghost-button" id="resetButton" type="button">重置</button>
+            </div>
+            <label class="range-label" for="timeSlider">
+              <span>振荡进程</span>
+              <span id="timeReadout">0.00T</span>
+            </label>
+            <input id="timeSlider" class="time-slider" type="range" min="0" max="1000" value="0" />
+            <div class="speed-row" aria-label="速度预设">
+              <button class="speed-chip" data-speed="0.55" type="button">慢</button>
+              <button class="speed-chip is-active" data-speed="1" type="button">中</button>
+              <button class="speed-chip" data-speed="1.55" type="button">快</button>
+            </div>
+          </section>
+
+          <section class="toggle-block">
+            <p class="section-kicker">显示设置</p>
+            <label class="toggle-item">
+              <span>显示 q-t / i-t 图像</span>
+              <input id="graphToggle" type="checkbox" checked />
+            </label>
+            <label class="toggle-item">
+              <span>显示能量条</span>
+              <input id="energyToggle" type="checkbox" checked />
+            </label>
+          </section>
+        </aside>
+
+        <section class="info-grid">
+          <article class="glass-panel energy-panel" id="energyPanel">
+            <div class="section-head">
+              <p class="section-kicker">能量转化</p>
+              <h2 class="panel-title">电场能与磁场能交替出现</h2>
+            </div>
+            <div class="energy-list">
+              <div class="energy-row">
+                <span>电场能 W<sub>E</sub></span>
+                <div class="energy-track"><i id="electricBar"></i></div>
+                <strong id="electricValue">100%</strong>
+              </div>
+              <div class="energy-row">
+                <span>磁场能 W<sub>B</sub></span>
+                <div class="energy-track energy-track-green"><i id="magneticBar"></i></div>
+                <strong id="magneticValue">0%</strong>
+              </div>
+              <div class="total-energy">理想模型中 W<sub>E</sub> + W<sub>B</sub> 保持不变</div>
+            </div>
+          </article>
+
+          <article class="glass-panel graph-panel" id="graphPanel">
+            <div class="section-head">
+              <p class="section-kicker">相位图像</p>
+              <h2 class="panel-title">q-t 与 i-t 相差四分之一个周期</h2>
+            </div>
+            <canvas id="graphCanvas" class="graph-canvas" aria-label="q-t 和 i-t 图像"></canvas>
+          </article>
+
+          <article class="glass-panel key-panel">
+            <div class="section-head">
+              <p class="section-kicker">关键时刻</p>
+              <h2 class="panel-title">四个状态一圈循环</h2>
+            </div>
+            <div class="key-moments">
+              <button class="moment-card is-active" data-theta="0" type="button">
+                <span>0</span>
+                <strong>电容满电</strong>
+                <em>电场能最大，i = 0</em>
+              </button>
+              <button class="moment-card" data-theta="1.5707963268" type="button">
+                <span>T/4</span>
+                <strong>电流最大</strong>
+                <em>q = 0，磁场能最大</em>
+              </button>
+              <button class="moment-card" data-theta="3.1415926536" type="button">
+                <span>T/2</span>
+                <strong>反向满电</strong>
+                <em>电场能最大，i = 0</em>
+              </button>
+              <button class="moment-card" data-theta="4.7123889804" type="button">
+                <span>3T/4</span>
+                <strong>反向电流最大</strong>
+                <em>q = 0，磁场能最大</em>
+              </button>
+            </div>
+          </article>
+
+          <article class="glass-panel mistake-panel">
+            <div class="section-head">
+              <p class="section-kicker">易错点</p>
+              <h2 class="panel-title">不要把“满电”和“电流最大”混在一起</h2>
+            </div>
+            <p>
+              电容器两极板电荷最多时，电压最大，但电流瞬时为零；电流最大时，
+              电容器恰好放完电，电场能为零、磁场能最大。课堂演示时可以停在四个关键时刻逐一对照。
+            </p>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script src="lc-oscillation-demo.js?v=20260427-1"></script>
+  </body>
+</html>

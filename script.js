@@ -100,6 +100,28 @@ function renderCatalog() {
   applyFilters();
 }
 
+function scrollToInitialHash() {
+  const targetId = decodeURIComponent(window.location.hash.replace("#", ""));
+  if (!targetId) {
+    return;
+  }
+
+  const jump = () => {
+    const target = document.getElementById(targetId);
+    if (!target) {
+      return;
+    }
+
+    target.classList.add("is-visible");
+    const top = target.getBoundingClientRect().top + window.pageYOffset - 16;
+    window.scrollTo({ top, behavior: "auto" });
+  };
+
+  window.requestAnimationFrame(jump);
+  window.setTimeout(jump, 120);
+  window.setTimeout(jump, 520);
+}
+
 function applyFilters() {
   const sections = document.querySelectorAll(".book-section");
   let visibleSections = 0;
@@ -178,6 +200,13 @@ function attachRevealObserver() {
   revealItems.forEach((item, index) => {
     item.style.transitionDelay = `${index * 40}ms`;
     observer.observe(item);
+    if (item.classList.contains("book-section")) {
+      item.classList.add("is-visible");
+    }
+    const rect = item.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      item.classList.add("is-visible");
+    }
   });
 }
 
@@ -189,6 +218,7 @@ function initYear() {
 
 renderJumpList();
 renderCatalog();
+scrollToInitialHash();
 attachFilterEvents();
 attachSearchEvent();
 initYear();
